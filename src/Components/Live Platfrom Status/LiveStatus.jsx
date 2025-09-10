@@ -95,10 +95,9 @@ const LiveStatus = () => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold">Train {train.number}</h2>
-              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                 getTrainStatusHexColor(train) === '#eab308' ? 'bg-yellow-500 text-black' : 
-                 getTrainStatusHexColor(train) === '#ef4444' ? 'bg-red-500' : 'bg-green-500'
-              }`}>
+              <span className={`px-2 py-1 rounded text-xs font-semibold ${getTrainStatusHexColor(train) === '#eab308' ? 'bg-yellow-500 text-black' :
+                  getTrainStatusHexColor(train) === '#ef4444' ? 'bg-red-500' : 'bg-green-500'
+                }`}>
                 {getTrainStatusText(train)}
               </span>
             </div>
@@ -107,7 +106,7 @@ const LiveStatus = () => {
             </button>
           </div>
           {/* ... (modal content remains the same) */}
-           <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center gap-2">
               <Zap size={16} className="text-blue-400" />
               <div>
@@ -170,19 +169,19 @@ const LiveStatus = () => {
         <div className="bg-gray-800 rounded-lg p-4">
           <h2 className="text-xl font-semibold text-white mb-2">Platform Schematic</h2>
           <p className="text-gray-400 mb-4 text-sm">Click on trains for detailed information</p>
-          
+
           <div className="relative w-full h-[600px] bg-gray-900 rounded-lg p-4 overflow-hidden">
             <svg width="100%" height="100%" viewBox="0 0 1400 550" className="absolute inset-0">
-               {/* ... (SVG for tracks remains the same) ... */}
-               <defs>
+              {/* ... (SVG for tracks remains the same) ... */}
+              <defs>
                 <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                  <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#374151" strokeWidth="0.5"/>
+                  <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#374151" strokeWidth="0.5" />
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill="url(#grid)" />
-              <path d="M 0 120 L 1400 120" stroke="#6B7280" strokeWidth="4" /><path d="M 0 140 L 1400 140" stroke="#6B7280" strokeWidth="4" /><path d="M 0 220 L 1400 220" stroke="#6B7280" strokeWidth="4" /><path d="M 0 240 L 1400 240" stroke="#6B7280" strokeWidth="4" /><path d="M 0 320 L 1400 320" stroke="#6B7280" strokeWidth="4" /><path d="M 0 340 L 1400 340" stroke="#6B7280" strokeWidth="4" /><path d="M 150 120 L 350 140" stroke="#6B7280" strokeWidth="2" /><path d="M 150 220 L 350 240" stroke="#6B7280" strokeWidth="2" /><path d="M 150 320 L 350 340" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 120 L 1250 140" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 220 L 1250 240" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 320 L 1250 340" stroke="#6B7280" strokeWidth="2" /><path d="M 100 80 L 350 240" stroke="#6B7280" strokeWidth="2" /><path d="M 100 180 L 350 340" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 340 L 1300 180" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 240 L 1300 80" stroke="#6B7280" strokeWidth="2" /><rect x="450" y="80" width="500" height="300" fill="#374151" stroke="#6B7280" strokeWidth="3" rx="12" fillOpacity="0.8" /><rect x="400" y="100" width="600" height="25" fill="#4B5563" rx="4" /><text x="700" y="118" textAnchor="middle" className="fill-white text-base font-semibold">Platform 1</text><rect x="400" y="200" width="600" height="25" fill="#4B5563" rx="4" /><text x="700" y="218" textAnchor="middle" className="fill-white text-base font-semibold">Platform 2</text><rect x="400" y="300" width="600" height="25" fill="#4B5563" rx="4" /><text x="700" y="318" textAnchor="middle" className="fill-white text-base font-semibold">Platform 3</text><text x="700" y="265" textAnchor="middle" className="fill-white text-3xl font-bold tracking-wider">CENTRAL STATION</text>{[150, 350, 1050, 1250].map(x => [120, 140, 220, 240, 320, 340].map(y => <circle key={`${x}-${y}`} cx={x} cy={y} r="4" fill="#3B82F6" />)) }{[100, 1300].map(x => [80, 180].map(y => <circle key={`${x}-${y}`} cx={x} cy={y} r="4" fill="#3B82F6" />)) }<polygon points="1330,115 1370,120 1330,125" fill="#10B981" /><polygon points="1330,135 1370,140 1330,145" fill="#10B981" /><polygon points="1330,215 1370,220 1330,225" fill="#10B981" /><polygon points="1330,235 1370,240 1330,245" fill="#10B981" /><polygon points="1330,315 1370,320 1330,325" fill="#10B981" /><polygon points="1330,335 1370,340 1330,345" fill="#10B981" /><circle cx="50" cy="230" r="8" fill="#F59E0B" stroke="#FCD34D" strokeWidth="3" /><text x="20" y="260" className="fill-white text-sm">Entry</text><text x="20" y="115" className="fill-gray-400 text-sm">Track 1A</text><text x="20" y="155" className="fill-gray-400 text-sm">Track 1B</text><text x="20" y="215" className="fill-gray-400 text-sm">Track 2A</text><text x="20" y="255" className="fill-gray-400 text-sm">Track 2B</text><text x="20" y="315" className="fill-gray-400 text-sm">Track 3A</text><text x="20" y="355" className="fill-gray-400 text-sm">Track 3B</text>
+              <path d="M 0 120 L 1400 120" stroke="#6B7280" strokeWidth="4" /><path d="M 0 140 L 1400 140" stroke="#6B7280" strokeWidth="4" /><path d="M 0 220 L 1400 220" stroke="#6B7280" strokeWidth="4" /><path d="M 0 240 L 1400 240" stroke="#6B7280" strokeWidth="4" /><path d="M 0 320 L 1400 320" stroke="#6B7280" strokeWidth="4" /><path d="M 0 340 L 1400 340" stroke="#6B7280" strokeWidth="4" /><path d="M 150 120 L 350 140" stroke="#6B7280" strokeWidth="2" /><path d="M 150 220 L 350 240" stroke="#6B7280" strokeWidth="2" /><path d="M 150 320 L 350 340" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 120 L 1250 140" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 220 L 1250 240" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 320 L 1250 340" stroke="#6B7280" strokeWidth="2" /><path d="M 100 80 L 350 240" stroke="#6B7280" strokeWidth="2" /><path d="M 100 180 L 350 340" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 340 L 1300 180" stroke="#6B7280" strokeWidth="2" /><path d="M 1050 240 L 1300 80" stroke="#6B7280" strokeWidth="2" /><rect x="450" y="80" width="500" height="300" fill="#374151" stroke="#6B7280" strokeWidth="3" rx="12" fillOpacity="0.8" /><rect x="400" y="100" width="600" height="25" fill="#4B5563" rx="4" /><text x="700" y="118" textAnchor="middle" className="fill-white text-base font-semibold">Platform 1</text><rect x="400" y="200" width="600" height="25" fill="#4B5563" rx="4" /><text x="700" y="218" textAnchor="middle" className="fill-white text-base font-semibold">Platform 2</text><rect x="400" y="300" width="600" height="25" fill="#4B5563" rx="4" /><text x="700" y="318" textAnchor="middle" className="fill-white text-base font-semibold">Platform 3</text><text x="700" y="265" textAnchor="middle" className="fill-white text-3xl font-bold tracking-wider">CENTRAL STATION</text>{[150, 350, 1050, 1250].map(x => [120, 140, 220, 240, 320, 340].map(y => <circle key={`${x}-${y}`} cx={x} cy={y} r="4" fill="#3B82F6" />))}{[100, 1300].map(x => [80, 180].map(y => <circle key={`${x}-${y}`} cx={x} cy={y} r="4" fill="#3B82F6" />))}<polygon points="1330,115 1370,120 1330,125" fill="#10B981" /><polygon points="1330,135 1370,140 1330,145" fill="#10B981" /><polygon points="1330,215 1370,220 1330,225" fill="#10B981" /><polygon points="1330,235 1370,240 1330,245" fill="#10B981" /><polygon points="1330,315 1370,320 1330,325" fill="#10B981" /><polygon points="1330,335 1370,340 1330,345" fill="#10B981" /><text x="20" y="115" className="fill-gray-400 text-sm">Track 1A</text><text x="20" y="155" className="fill-gray-400 text-sm">Track 1B</text><text x="20" y="215" className="fill-gray-400 text-sm">Track 2A</text><text x="20" y="255" className="fill-gray-400 text-sm">Track 2B</text><text x="20" y="315" className="fill-gray-400 text-sm">Track 3A</text><text x="20" y="355" className="fill-gray-400 text-sm">Track 3B</text>
             </svg>
-            
+
             <div className="absolute inset-0">
               {Object.entries(trainData).map(([trackId, trackTrains], index) => {
                 const train = getTrainAtTime(trackTrains);
@@ -190,7 +189,7 @@ const LiveStatus = () => {
                 const topPosition = train.direction === 'right' ? (21 + index * 18) : (24 + index * 18);
 
                 return (
-                  <div 
+                  <div
                     key={train.id}
                     className="absolute transition-all duration-1000 ease-in-out cursor-pointer"
                     style={{
@@ -207,9 +206,9 @@ const LiveStatus = () => {
                       </div>
                       {/* Using the new TrainSvg component */}
                       <div className="relative">
-                        <TrainSvg 
-                          color={getTrainStatusHexColor(train)} 
-                          direction={train.direction} 
+                        <TrainSvg
+                          color={getTrainStatusHexColor(train)}
+                          direction={train.direction}
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className="text-white text-xs font-bold pointer-events-none">{train.number.split('-')[1]}</span>
@@ -221,18 +220,18 @@ const LiveStatus = () => {
               })}
             </div>
           </div>
-          
+
           <div className="flex justify-center mt-4 gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{backgroundColor: '#22c55e'}}></div>
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#22c55e' }}></div>
               <span className="text-white text-sm">Moving</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{backgroundColor: '#ef4444'}}></div>
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ef4444' }}></div>
               <span className="text-white text-sm">Stopped</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{backgroundColor: '#eab308'}}></div>
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#eab308' }}></div>
               <span className="text-white text-sm">Delayed</span>
             </div>
             <div className="flex items-center gap-2">
