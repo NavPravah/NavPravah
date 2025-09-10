@@ -42,16 +42,14 @@ const Dashboard = () => {
 
   const weatherAlerts = [
     { type: 'Fog', severity: 'medium', affected: 'Sections 1A-2B', visibility: '200m', impact: 'Speed restrictions active' },
-    { type: 'Temperature', severity: 'low', affected: 'Track expansion zones', temp: '38°C', impact: 'Monitoring thermal stress' }
+    { type: 'Temperature', severity: 'low', affected: 'Track expansion zones', temp: '18°C', impact: 'Monitoring thermal stress' }
   ];
 
   const systemMetrics = {
-    throughput: { current: 24, target: 28, unit: 'trains/hour' },
+    throughput: { current: 24, target: null },
     punctuality: { current: 87, target: 90, unit: '%' },
-    platformUtil: { current: 76, target: 80, unit: '%' },
     aiAcceptance: { current: 92, target: 85, unit: '%' },
     avgWaitTime: { current: 4.2, target: 5.0, unit: 'min' },
-    energyEff: { current: 88, target: 85, unit: '%' }
   };
 
   const maintenanceBlocks = [
@@ -109,30 +107,81 @@ const Dashboard = () => {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Key Metrics Row */}
-        <div className="grid grid-cols-6 gap-4">
-          {Object.entries(systemMetrics).map(([key, data]) => {
-            const trend = getMetricTrend(data.current, data.target);
-            const TrendIcon = trend.icon;
-            
-            return (
-              <div key={key} className="bg-slate-800 rounded-lg border border-slate-700 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-gray-400 uppercase tracking-wide">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </span>
-                  <TrendIcon className={`w-4 h-4 ${trend.color}`} />
+        {/* Key Metrics Row with AI Actions in Center */}
+  <div className="flex justify-center items-center mx-12 gap-6">
+          {/* Left Metrics */}
+          <div className="flex gap-6">
+            {Object.entries(systemMetrics).slice(0, 2).map(([key, data]) => {
+              const trend = getMetricTrend(data.current, data.target);
+              const TrendIcon = trend.icon;
+              
+              return (
+                <div key={key} className="bg-slate-800 rounded-lg border border-slate-700 p-4" style={{ minWidth: '12vw' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400 uppercase tracking-wide">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </span>
+                    <TrendIcon className={`w-4 h-4 ${trend.color}`} />
+                  </div>
+                  <div className="flex items-baseline space-x-1">
+                    <span className="text-2xl font-bold text-white">{data.current}</span>
+                    <span className="text-sm text-gray-400">{data.unit}</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {data.target ? `Target: ${data.target}${data.unit}` : ''}
+                  </div>
                 </div>
-                <div className="flex items-baseline space-x-1">
-                  <span className="text-2xl font-bold text-white">{data.current}</span>
-                  <span className="text-sm text-gray-400">{data.unit}</span>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Target: {data.target}{data.unit}
-                </div>
+              );
+            })}
+          </div>
+
+          {/* Center AI Actions */}
+          <div className="bg-slate-800 rounded-lg border border-slate-700 p-3 mx-6 flex flex-col items-center" style={{ minWidth: '20vw' }}>
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center">
+              <Zap className="w-4 h-4 mr-2 text-yellow-400" />
+              AI vs Controller Actions (Last Hour)
+            </h3>
+            <div className="grid grid-cols-3 gap-4 w-full">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-400">20</div>
+                <div className="text-xs text-gray-400">AI Accepted</div>
               </div>
-            );
-          })}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-400">2</div>
+                <div className="text-xs text-gray-400">Manual Override</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-400">1</div>
+                <div className="text-xs text-gray-400">Emergency</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Metrics */}
+          <div className="flex gap-6">
+            {Object.entries(systemMetrics).slice(2, 4).map(([key, data]) => {
+              const trend = getMetricTrend(data.current, data.target);
+              const TrendIcon = trend.icon;
+              
+              return (
+                <div key={key} className="bg-slate-800 rounded-lg border border-slate-700 p-4" style={{ minWidth: '12vw' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400 uppercase tracking-wide">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </span>
+                    <TrendIcon className={`w-4 h-4 ${trend.color}`} />
+                  </div>
+                  <div className="flex items-baseline space-x-1">
+                    <span className="text-2xl font-bold text-white">{data.current}</span>
+                    <span className="text-sm text-gray-400">{data.unit}</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {data.target ? `Target: ${data.target}${data.unit}` : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="grid grid-cols-12 gap-6">
@@ -333,32 +382,6 @@ const Dashboard = () => {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-
-        {/* AI vs Controller Actions Summary */}
-        <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
-            <Zap className="w-5 h-5 mr-2 text-yellow-400" />
-            AI vs Controller Actions (Last Hour)
-          </h2>
-          <div className="grid grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-400">47</div>
-              <div className="text-sm text-gray-400">AI Accepted</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-400">8</div>
-              <div className="text-sm text-gray-400">Manual Override</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-400">12</div>
-              <div className="text-sm text-gray-400">Hybrid Decisions</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-red-400">2</div>
-              <div className="text-sm text-gray-400">Emergency Overrides</div>
             </div>
           </div>
         </div>

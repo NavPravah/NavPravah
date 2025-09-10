@@ -11,8 +11,8 @@ function App() {
     <>
       {/* <Login /> */}
       {/* <Signup />   */}
-      <LiveStatus/>
-      {/* <Dashboard/> */}
+      {/* <LiveStatus/> */}
+      <Dashboard/>
       {/* <KPI/> */}
       {/* <Audit/> */}
     </>
