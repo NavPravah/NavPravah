@@ -633,10 +633,6 @@ const LiveStatus = () => {
                         onClick={() => setSelectedTrain(train)}
                       >
                         <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-1 mb-1 text-xs text-gray-300">
-                            {train.direction === 'right' ? <ArrowRight size={10} /> : <ArrowLeft size={10} />}
-                            <span>{train.direction === 'right' ? 'EAST' : 'WEST'}BOUND</span>
-                          </div>
                           <div className="relative">
                             <TrainSvg
                               color={getTrainStatusHexColor(train)}
