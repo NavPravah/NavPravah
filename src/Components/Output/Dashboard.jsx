@@ -153,11 +153,11 @@ const Dashboard = () => {
               </h3>
               <div className="grid grid-cols-3 gap-4 w-full">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">20</div>
+                  <div className="text-2xl font-bold text-green-400">5</div>
                   <div className="text-xs text-gray-400">AI Accepted</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-400">2</div>
+                  <div className="text-2xl font-bold text-yellow-400">1</div>
                   <div className="text-xs text-gray-400">Manual Override</div>
                 </div>
                 <div className="text-center">
