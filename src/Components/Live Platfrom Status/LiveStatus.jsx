@@ -179,7 +179,6 @@ const LeftPanel = ({ isOpen, setIsOpen, sidebarOpen }) => {
       </button>
 
       {/* Left Panel */}
-      {/* THIS IS THE FIX: Changed positioning logic from left-64 to ml-64 to work correctly with transform */}
       <div 
         className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-gray-800 border-r border-gray-700 transition-all duration-300 z-40 ${
           sidebarOpen ? 'ml-64' : ''
@@ -288,11 +287,13 @@ const LeftPanel = ({ isOpen, setIsOpen, sidebarOpen }) => {
 
 const LiveStatus = () => {
   const [selectedTrain, setSelectedTrain] = useState(null);
+  const [overriddenTrain, setOverriddenTrain] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [isLive, setIsLive] = useState(true);
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [masterClock, setMasterClock] = useState('14:23:45');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [trainOverrides, setTrainOverrides] = useState({});
 
   // Update master clock every second
   useEffect(() => {
@@ -302,6 +303,13 @@ const LiveStatus = () => {
     }, 1000);
     return () => clearInterval(clockInterval);
   }, []);
+
+  const handleOverride = (train) => {
+    const overriddenTrainData = { ...train, overridden: true };
+    setTrainOverrides(prev => ({ ...prev, [train.id]: true }));
+    setSelectedTrain(null);
+    setOverriddenTrain(overriddenTrainData);
+  };
 
   // Sample train data for different tracks
   const trainData = {
@@ -336,11 +344,16 @@ const LiveStatus = () => {
   }, []);
 
   const getTrainAtTime = (trackData) => {
-    return trackData[currentTime];
+    const train = trackData[currentTime];
+    if (train && trainOverrides[train.id]) {
+      return { ...train, overridden: true };
+    }
+    return train;
   };
 
   const getTrainStatusHexColor = (train) => {
     if (!train) return '#6b7280';
+    if (train.overridden) return '#ef4444';
     if (train.delay > 0) return '#eab308';
     if (train.speed === 0) return '#ef4444';
     return '#22c55e';
@@ -348,13 +361,21 @@ const LiveStatus = () => {
 
   const getTrainStatusText = (train) => {
     if (!train) return '';
+    if (train.overridden) return 'STOPPED';
     if (train.delay > 0) return 'DELAYED';
     if (train.speed === 0) return 'STOPPED';
-    return 'MOVING';
+    return 'RUNNING';
   };
 
-  const TrainModal = ({ train, onClose }) => {
+  const TrainModal = ({ train, onClose, onOverride }) => {
     if (!train) return null;
+
+    const getStatusText = (train) => {
+      if (train.overridden) return 'STOPPED';
+      if (train.delay > 0) return 'DELAYED';
+      if (train.speed === 0) return 'STOPPED';
+      return 'RUNNING';
+    };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
@@ -363,10 +384,11 @@ const LiveStatus = () => {
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold">Train {train.number}</h2>
               <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                train.overridden ? 'bg-red-500' :
                 getTrainStatusHexColor(train) === '#eab308' ? 'bg-yellow-500 text-black' :
                 getTrainStatusHexColor(train) === '#ef4444' ? 'bg-red-500' : 'bg-green-500'
               }`}>
-                {getTrainStatusText(train)}
+                {getStatusText(train)}
               </span>
             </div>
             <button onClick={onClose} className="text-gray-400 hover:text-white">
@@ -376,10 +398,10 @@ const LiveStatus = () => {
           
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center gap-2">
-              <Zap size={16} className="text-blue-400" />
+              <Activity size={16} className="text-blue-400" />
               <div>
-                <div className="text-sm text-gray-400">Speed</div>
-                <div className="text-lg font-semibold">{train.speed} km/h</div>
+                <div className="text-sm text-gray-400">Status</div>
+                <div className="text-lg font-semibold">{getStatusText(train)}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -415,8 +437,86 @@ const LiveStatus = () => {
               <div className="text-lg font-semibold">{train.destination}</div>
             </div>
           </div>
-          <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+          <button 
+            onClick={() => onOverride(train)}
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          >
             Override
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const OverrideModal = ({ train, onClose }) => {
+    if (!train) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
+        <div className="bg-gray-800 rounded-lg p-6 w-96 text-white border border-gray-700">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold">Train {train.number}</h2>
+              <span className="px-2 py-1 rounded text-xs font-semibold bg-red-500">
+                STOPPED
+              </span>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-white">
+              <X size={24} />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Activity size={16} className="text-blue-400" />
+              <div>
+                <div className="text-sm text-gray-400">Status</div>
+                <div className="text-lg font-semibold">STOPPED</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin size={16} className="text-blue-400" />
+              <div>
+                <div className="text-sm text-gray-400">Distance</div>
+                <div className="text-lg font-semibold">{train.distance} km</div>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Clock size={16} className="text-blue-400" />
+              <div>
+                <div className="text-sm text-gray-400">Arrival Time</div>
+                <div className="text-lg font-semibold">{train.arrival}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={16} className="text-blue-400" />
+              <div>
+                <div className="text-sm text-gray-400">Override Status</div>
+                <div className="text-lg font-semibold text-red-400">ACTIVE</div>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-700 pt-4 mb-6">
+            <div className="text-sm text-gray-400">Track & Destination</div>
+            <div className="flex justify-between items-center">
+              <div className="text-lg font-semibold">Platform {train.platform}</div>
+              <div className="text-lg font-semibold">{train.destination}</div>
+            </div>
+          </div>
+          <div className="bg-red-900/50 border border-red-600 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 text-red-300">
+              <AlertTriangle size={16} />
+              <span className="text-sm font-medium">Override Applied</span>
+            </div>
+            <p className="text-xs text-red-200 mt-1">Train has been stopped via manual override</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          >
+            Close
           </button>
         </div>
       </div>
@@ -569,7 +669,17 @@ const LiveStatus = () => {
           </div>
         </div>
       </div>
-      <TrainModal train={selectedTrain} onClose={() => setSelectedTrain(null)} />
+
+      {/* Modals */}
+      <TrainModal 
+        train={selectedTrain} 
+        onClose={() => setSelectedTrain(null)}
+        onOverride={handleOverride}
+      />
+      <OverrideModal 
+        train={overriddenTrain} 
+        onClose={() => setOverriddenTrain(null)}
+      />
     </div>
   );
 };
