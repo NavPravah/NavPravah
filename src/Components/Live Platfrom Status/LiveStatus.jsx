@@ -293,7 +293,7 @@ const LiveStatus = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [isLive, setIsLive] = useState(true);
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
-  const [masterClock, setMasterClock] = useState('14:23:45');
+  const [masterClock, setMasterClock] = useState(() => new Date().toLocaleTimeString('en-US', { hour12: false }));
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [trainOverrides, setTrainOverrides] = useState({});
 
@@ -554,7 +554,7 @@ const LiveStatus = () => {
               <h1 className="text-3xl font-bold text-white">Railway Control Center</h1>
               <div className="text-white text-right">
                 <div className="text-sm opacity-75">Platform View - Station Alpha</div>
-                <div className="text-lg">14:23:45 | 3 Active</div>
+                <div className="text-lg">{masterClock} | 3 Active</div>
               </div>
             </div>
 
@@ -587,7 +587,7 @@ const LiveStatus = () => {
                   <path d="M 100 180 L 350 340" stroke="#6B7280" strokeWidth="2" />
                   <path d="M 1050 340 L 1300 180" stroke="#6B7280" strokeWidth="2" />
                   <path d="M 1050 240 L 1300 80" stroke="#6B7280" strokeWidth="2" />
-                  <rect x="450" y="80" width="500" height="300" fill="#374151" stroke="#6B7280" strokeWidth="3" rx="12" fillOpacity="0.8" />
+                  <rect x="450" y="35" width="500" height="350" fill="#374151" stroke="#6B7280" strokeWidth="3" rx="12" fillOpacity="0.8" />
                   <rect x="400" y="100" width="600" height="25" fill="#4B5563" rx="4" />
                   <text x="700" y="118" textAnchor="middle" className="fill-white text-base font-semibold">Platform 1</text>
                   <rect x="400" y="200" width="600" height="25" fill="#4B5563" rx="4" />
