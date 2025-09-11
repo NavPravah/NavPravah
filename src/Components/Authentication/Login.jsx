@@ -41,8 +41,6 @@ export default function Login() {
             className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative overflow-hidden"
             style={{ backgroundImage: `url(${platformbcg})`, backgroundSize: 'cover' }}
         >
-            <Toaster position="top-right" />
-            {/* Background pattern */}
             <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-20 left-10 w-32 h-1 bg-white transform -rotate-45"></div>
                 <div className="absolute top-40 right-20 w-24 h-1 bg-white transform rotate-45"></div>
