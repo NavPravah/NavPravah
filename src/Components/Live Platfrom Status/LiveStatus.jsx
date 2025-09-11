@@ -163,6 +163,12 @@ const LeftPanel = ({ isOpen, setIsOpen, sidebarOpen }) => {
       default: return 'border-gray-500 bg-gray-500/10';
     }
   };
+  
+  // THIS IS THE FIX: A new, robust positioning logic for the panel
+  const panelStyle = {
+    width: '380px',
+    left: isOpen ? (sidebarOpen ? '16rem' : '0') : '-380px', // Controls position directly
+  };
 
   return (
     <>
@@ -179,14 +185,9 @@ const LeftPanel = ({ isOpen, setIsOpen, sidebarOpen }) => {
       </button>
 
       {/* Left Panel */}
-      {/* THIS IS THE FIX: Changed positioning logic from left-64 to ml-64 to work correctly with transform */}
       <div 
-        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-gray-800 border-r border-gray-700 transition-all duration-300 z-40 ${
-          sidebarOpen ? 'ml-64' : ''
-        } ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`} 
-        style={{ width: '380px' }}
+        className="fixed top-16 h-[calc(100vh-4rem)] bg-gray-800 border-r border-gray-700 transition-all duration-300 z-40"
+        style={panelStyle} // Apply the new positioning style here
       >
         
         {/* Panel Header */}
@@ -292,7 +293,7 @@ const LiveStatus = () => {
   const [isLive, setIsLive] = useState(true);
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [masterClock, setMasterClock] = useState('14:23:45');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Changed initial state to match video
 
   // Update master clock every second
   useEffect(() => {

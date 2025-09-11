@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, Calendar, Download, Filter, Target, Award, AlertCircle, CheckCircle, Clock, Users, Zap, Settings, Activity } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, TrendingDown, Calendar, Download, Filter, Target, Award, AlertCircle, CheckCircle, Clock, Users, Zap, Settings, Activity, Menu, X as CloseIcon } from 'lucide-react';
+
 import Sidebar from '../Sidebar/Sidebar';
 
 const PerformanceTrends = () => {
@@ -50,7 +51,6 @@ const PerformanceTrends = () => {
     energyEff: { name: 'Energy Efficiency', unit: '%', icon: Settings, color: '#22c55e' }
   };
 
-  // Conflict resolution analysis
   const conflictData = [
     { type: 'Platform Occupancy', resolved: 45, pending: 2, avgTime: 3.2 },
     { type: 'Priority Crossing', resolved: 38, pending: 1, avgTime: 2.8 },
@@ -59,7 +59,6 @@ const PerformanceTrends = () => {
     { type: 'Emergency', resolved: 6, pending: 0, avgTime: 1.9 }
   ];
 
-  // Train type performance
   const trainTypeData = [
     { type: 'Express', punctuality: 89, avgDelay: 4.1, count: 145 },
     { type: 'Local', punctuality: 92, avgDelay: 3.2, count: 238 },
@@ -67,7 +66,6 @@ const PerformanceTrends = () => {
     { type: 'Special', punctuality: 85, avgDelay: 5.8, count: 12 }
   ];
 
-  // Controller performance
   const controllerData = [
     { name: 'Operator_Alpha', decisions: 156, overrides: 12, accuracy: 94, efficiency: 88 },
     { name: 'Operator_Beta', decisions: 142, overrides: 8, accuracy: 96, efficiency: 91 },
@@ -116,379 +114,306 @@ const PerformanceTrends = () => {
     <div className="min-h-screen bg-slate-900 text-gray-100">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      {/* Header */}
-      <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Railway Control Center</h1>
-            <p className="text-sm text-gray-400 mt-1">Performance Trends & KPI Analysis - Station Alpha | Last Updated: 14:23:45</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <select 
-                value={selectedPeriod} 
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+      
+      {/* Main Content Wrapper */}
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        {/* Header */}
+        <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="text-gray-300 hover:text-white"
               >
-                <option value="7days">Last 7 Days</option>
-                <option value="30days">Last 30 Days</option>
-              </select>
+                <Menu className="w-6 h-6" style={{ visibility: 'none' }} />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Railway Control Center</h1>
+                <p className="text-sm text-gray-400 mt-1">Performance Trends & KPI Analysis - Station Alpha | Last Updated: 14:23:45</p>
+              </div>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-2">
-              <Download className="w-4 h-4" />
-              <span>Export Report</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <select 
+                  value={selectedPeriod} 
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  className="bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="7days">Last 7 Days</option>
+                  <option value="30days">Last 30 Days</option>
+                </select>
+              </div>
+              <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-2">
+                <Download className="w-4 h-4" />
+                <span>Export Report</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="p-6 space-y-6">
-        {/* KPI Overview Cards */}
-        <div className="grid grid-cols-4 gap-4">
-          {Object.entries(kpiDefinitions).slice(0, 4).map(([key, def]) => {
-            const trend = getKPITrend(currentData, key);
-            const TrendIcon = getTrendIcon(trend.trend);
-            const latest = currentData[currentData.length - 1][key];
-            const target = kpiTargets[key];
-            const IconComponent = def.icon;
-            
-            return (
-              <div 
-                key={key}
-                className={`bg-slate-800 rounded-lg border border-slate-700 p-4 cursor-pointer transition-all ${
-                  selectedKPI === key ? 'border-blue-500 bg-slate-700' : 'hover:border-slate-600'
-                }`}
-                onClick={() => setSelectedKPI(key)}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <IconComponent className="w-5 h-5" style={{ color: def.color }} />
-                  <TrendIcon className={`w-4 h-4 ${getTrendColor(key, trend.trend)}`} />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-sm text-gray-400">{def.name}</div>
-                  <div className="flex items-baseline space-x-2">
-                    <span className="text-2xl font-bold text-white">{latest}</span>
-                    <span className="text-sm text-gray-400">{def.unit}</span>
+        <div className="p-6 space-y-6">
+          {/* KPI Overview Cards */}
+          <div className="grid grid-cols-4 gap-4">
+            {Object.entries(kpiDefinitions).slice(0, 4).map(([key, def]) => {
+              const trend = getKPITrend(currentData, key);
+              const TrendIcon = getTrendIcon(trend.trend);
+              const latest = currentData[currentData.length - 1][key];
+              const target = kpiTargets[key];
+              const IconComponent = def.icon;
+              
+              return (
+                <div 
+                  key={key}
+                  className={`bg-slate-800 rounded-lg border border-slate-700 p-4 cursor-pointer transition-all ${
+                    selectedKPI === key ? 'border-blue-500 bg-slate-700' : 'hover:border-slate-600'
+                  }`}
+                  onClick={() => setSelectedKPI(key)}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <IconComponent className="w-5 h-5" style={{ color: def.color }} />
+                    <TrendIcon className={`w-4 h-4 ${getTrendColor(key, trend.trend)}`} />
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className={`${latest >= target ? 'text-green-400' : 'text-red-400'}`}>
-                      Target: {target}{def.unit}
-                    </span>
-                    {trend.change > 0 && (
-                      <span className={getTrendColor(key, trend.trend)}>
-                        {trend.change.toFixed(1)}%
+                  <div className="space-y-1">
+                    <div className="text-sm text-gray-400">{def.name}</div>
+                    <div className="flex items-baseline space-x-2">
+                      <span className="text-2xl font-bold text-white">{latest}</span>
+                      <span className="text-sm text-gray-400">{def.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={`${latest >= target ? 'text-green-400' : 'text-red-400'}`}>
+                        Target: {target}{def.unit}
                       </span>
-                    )}
+                      {trend.change > 0 && (
+                        <span className={getTrendColor(key, trend.trend)}>
+                          {trend.change.toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-12 gap-6">
+            {/* Main KPI Trend Chart */}
+            <div className="col-span-8 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <h2 className="text-lg font-semibold text-white">{currentKPIData.name} Trend</h2>
+                  <div className="flex items-center space-x-2">
+                    <Filter className="w-4 h-4 text-gray-400" />
+                    <select 
+                      value={comparisonMode} 
+                      onChange={(e) => setComparisonMode(e.target.value)}
+                      className="bg-slate-700 border border-slate-600 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="target">vs Target</option>
+                      <option value="historical">vs Historical</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-400">Current</div>
+                  <div className="text-xl font-bold text-white">
+                    {currentData[currentData.length - 1][selectedKPI]}{currentKPIData.unit}
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-12 gap-6">
-          {/* Main KPI Trend Chart */}
-          <div className="col-span-8 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <h2 className="text-lg font-semibold text-white">{currentKPIData.name} Trend</h2>
-                <div className="flex items-center space-x-2">
-                  <Filter className="w-4 h-4 text-gray-400" />
-                  <select 
-                    value={comparisonMode} 
-                    onChange={(e) => setComparisonMode(e.target.value)}
-                    className="bg-slate-700 border border-slate-600 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="target">vs Target</option>
-                    <option value="historical">vs Historical</option>
-                  </select>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-400">Current</div>
-                <div className="text-xl font-bold text-white">
-                  {currentData[currentData.length - 1][selectedKPI]}{currentKPIData.unit}
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={currentData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#9ca3af"
-                    fontSize={12}
-                    tickFormatter={formatDate}
-                  />
-                  <YAxis stroke="#9ca3af" fontSize={12} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1e293b', 
-                      border: '1px solid #475569',
-                      borderRadius: '8px'
-                    }}
-                    labelFormatter={formatDate}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey={selectedKPI} 
-                    stroke={currentKPIData.color}
-                    strokeWidth={3}
-                    dot={{ fill: currentKPIData.color, strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: currentKPIData.color, strokeWidth: 2 }}
-                  />
-                  {comparisonMode === 'target' && (
+              <div className="p-6">
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={currentData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#9ca3af"
+                      fontSize={12}
+                      tickFormatter={formatDate}
+                    />
+                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1e293b', 
+                        border: '1px solid #475569',
+                        borderRadius: '8px'
+                      }}
+                      labelFormatter={formatDate}
+                    />
+                    <Legend />
                     <Line 
                       type="monotone" 
-                      dataKey={() => currentTarget}
-                      stroke="#6b7280" 
-                      strokeDasharray="5 5"
-                      dot={false}
-                      name={`Target (${currentTarget})`}
+                      dataKey={selectedKPI} 
+                      stroke={currentKPIData.color}
+                      strokeWidth={3}
+                      name={currentKPIData.name}
+                      dot={{ fill: currentKPIData.color, strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: currentKPIData.color, strokeWidth: 2 }}
                     />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
+                    {comparisonMode === 'target' && (
+                      <Line 
+                        type="monotone" 
+                        dataKey={() => currentTarget}
+                        stroke="#6b7280" 
+                        strokeDasharray="5 5"
+                        dot={false}
+                        name={`Target (${currentTarget})`}
+                      />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
 
-          {/* KPI Summary */}
-          <div className="col-span-4 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <Target className="w-5 h-5 mr-2 text-green-400" />
-                KPI Summary
-              </h2>
-            </div>
-            <div className="p-4 space-y-3">
-              {Object.entries(kpiDefinitions).map(([key, def]) => {
-                const latest = currentData[currentData.length - 1][key];
-                const target = kpiTargets[key];
-                const achievement = key === 'avgDelay' || key === 'conflicts' || key === 'safetyIncidents' 
-                  ? (latest <= target ? 100 : (target / latest * 100))
-                  : (latest / target * 100);
-                const IconComponent = def.icon;
-                
-                return (
-                  <div key={key} className="flex items-center justify-between p-2 bg-slate-700/50 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <IconComponent className="w-4 h-4" style={{ color: def.color }} />
-                      <span className="text-sm text-gray-300">{def.name}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-white">
-                        {latest}{def.unit}
+            {/* KPI Summary */}
+            <div className="col-span-4 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <Target className="w-5 h-5 mr-2 text-green-400" />
+                  KPI Summary
+                </h2>
+              </div>
+              <div className="p-4 space-y-3">
+                {Object.entries(kpiDefinitions).map(([key, def]) => {
+                  const latest = currentData[currentData.length - 1][key];
+                  const target = kpiTargets[key];
+                  const achievement = key === 'avgDelay' || key === 'conflicts' || key === 'safetyIncidents' 
+                    ? (latest <= target ? 100 : (target / latest * 100))
+                    : (latest / target * 100);
+                  const IconComponent = def.icon;
+                  
+                  return (
+                    <div key={key} className="flex items-center justify-between p-2 bg-slate-700/50 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <IconComponent className="w-4 h-4" style={{ color: def.color }} />
+                        <span className="text-sm text-gray-300">{def.name}</span>
                       </div>
-                      <div className={`text-xs ${achievement >= 100 ? 'text-green-400' : achievement >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
-                        {achievement.toFixed(0)}% of target
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-white">
+                          {latest}{def.unit}
+                        </div>
+                        <div className={`text-xs ${achievement >= 100 ? 'text-green-400' : achievement >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {achievement.toFixed(0)}% of target
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-12 gap-6">
-          {/* Train Type Performance */}
-          <div className="col-span-6 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <Award className="w-5 h-5 mr-2 text-blue-400" />
-                Performance by Train Type
-              </h2>
-            </div>
-            <div className="p-6">
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={trainTypeData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="type" stroke="#9ca3af" fontSize={12} />
-                  <YAxis stroke="#9ca3af" fontSize={12} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1e293b', 
-                      border: '1px solid #475569',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Bar dataKey="punctuality" fill="#10b981" name="Punctuality %" />
-                </BarChart>
-              </ResponsiveContainer>
-              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                {trainTypeData.map((type, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
-                    <span className="text-gray-300">{type.type}</span>
-                    <div className="text-right">
-                      <div className="text-white">{type.count} trains</div>
-                      <div className="text-gray-400">{type.avgDelay}min avg delay</div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Conflict Resolution Analysis */}
-          <div className="col-span-6 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <AlertCircle className="w-5 h-5 mr-2 text-orange-400" />
-                Conflict Resolution Analysis
-              </h2>
+          <div className="grid grid-cols-12 gap-6">
+            {/* Train Type Performance */}
+            <div className="col-span-6 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <Award className="w-5 h-5 mr-2 text-blue-400" />
+                  Performance by Train Type
+                </h2>
+              </div>
+              <div className="p-6">
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={trainTypeData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="type" stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1e293b', 
+                        border: '1px solid #475569',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="punctuality" fill="#10b981" name="Punctuality %" />
+                    <Bar dataKey="avgDelay" fill="#f59e0b" name="Avg Delay (min)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={conflictData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        dataKey="resolved"
-                        name="Resolved"
-                      >
-                        {conflictData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="space-y-3">
+
+            {/* Conflict Resolution Analysis */}
+            <div className="col-span-6 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <AlertCircle className="w-5 h-5 mr-2 text-orange-400" />
+                  Conflict Resolution Analysis
+                </h2>
+              </div>
+              <div className="p-6 flex items-center">
+                <ResponsiveContainer width="40%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={conflictData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="resolved"
+                    >
+                      {conflictData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="w-60 space-y-2">
                   {conflictData.map((conflict, index) => (
-                    <div key={index} className="p-3 bg-slate-700/50 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                        ></div>
-                        <span className="text-sm font-medium text-white">{conflict.type}</span>
-                      </div>
-                      <div className="text-xs text-gray-400 space-y-1">
-                        <div>Resolved: {conflict.resolved} | Pending: {conflict.pending}</div>
-                        <div>Avg Time: {conflict.avgTime}min</div>
-                      </div>
+                    <div key={index} className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
+                      <span className="text-sm text-gray-300">{conflict.type}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Controller Performance */}
-        <div className="bg-slate-800 rounded-lg border border-slate-700">
-          <div className="px-6 py-4 border-b border-slate-700">
-            <h2 className="text-lg font-semibold text-white flex items-center">
-              <Users className="w-5 h-5 mr-2 text-purple-400" />
-              Controller Performance Analysis
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-4 gap-6">
-              {controllerData.map((controller, index) => (
-                <div key={index} className="bg-slate-700/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-white">{controller.name}</h3>
-                    {controller.name.includes('System') && (
-                      <Zap className="w-4 h-4 text-yellow-400" />
-                    )}
+          {/* Controller Performance */}
+          <div className="bg-slate-800 rounded-lg border border-slate-700">
+            <div className="px-6 py-4 border-b border-slate-700">
+              <h2 className="text-lg font-semibold text-white flex items-center">
+                <Users className="w-5 h-5 mr-2 text-purple-400" />
+                Controller Performance Analysis
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-4 gap-6">
+                {controllerData.map((controller, index) => (
+                  <div key={index} className="bg-slate-700/30 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-medium text-white">{controller.name}</h3>
+                      {controller.name.includes('System') && (
+                        <Zap className="w-4 h-4 text-yellow-400" />
+                      )}
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Decisions</span>
+                        <span className="text-white">{controller.decisions}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Overrides</span>
+                        <span className="text-white">{controller.overrides}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Accuracy</span>
+                        <span className={`${controller.accuracy >= 90 ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {controller.accuracy}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Efficiency</span>
+                        <span className={`${controller.efficiency >= 90 ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {controller.efficiency}%
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Decisions</span>
-                      <span className="text-white">{controller.decisions}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Overrides</span>
-                      <span className="text-white">{controller.overrides}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Accuracy</span>
-                      <span className={`${controller.accuracy >= 90 ? 'text-green-400' : 'text-yellow-400'}`}>
-                        {controller.accuracy}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Efficiency</span>
-                      <span className={`${controller.efficiency >= 90 ? 'text-green-400' : 'text-yellow-400'}`}>
-                        {controller.efficiency}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Performance Insights */}
-        <div className="grid grid-cols-3 gap-6">
-          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-              <h3 className="font-semibold text-white">Key Achievements</h3>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-gray-300">AI acceptance rate improved by 3.2%</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-gray-300">Zero safety incidents for 6 consecutive days</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-gray-300">Express train punctuality above 85%</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <AlertCircle className="w-5 h-5 text-yellow-400" />
-              <h3 className="font-semibold text-white">Areas for Improvement</h3>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <span className="text-gray-300">Freight train delays exceeding target</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <span className="text-gray-300">Platform utilization below optimal</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <span className="text-gray-300">Weather-related conflicts increasing</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Target className="w-5 h-5 text-blue-400" />
-              <h3 className="font-semibold text-white">Recommendations</h3>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <span className="text-gray-300">Optimize freight scheduling algorithms</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <span className="text-gray-300">Enhance weather prediction integration</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <span className="text-gray-300">Increase controller training on AI tools</span>
+                ))}
               </div>
             </div>
           </div>

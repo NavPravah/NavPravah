@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Download, Eye, AlertTriangle, Clock, User, Settings } from 'lucide-react';
+import { Search, Filter, Download, X, AlertTriangle, Clock, User, Settings, Menu } from 'lucide-react';
 import Sidebar from '../Sidebar/Sidebar';
 
 const AuditTrail = () => {
@@ -10,7 +10,7 @@ const AuditTrail = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Sample audit data
-  const auditData = [
+  const auditData = useMemo(() => [
     {
       id: 'AUD_001',
       timestamp: '2025-09-10T14:23:45.123Z',
@@ -79,7 +79,7 @@ const AuditTrail = () => {
       linkedIncident: null,
       dataSource: ['Delay_Predictor', 'Network_Model', 'Live_Tracking']
     }
-  ];
+  ], []);
 
   const filteredData = useMemo(() => {
     return auditData.filter(entry => {
@@ -96,7 +96,7 @@ const AuditTrail = () => {
       
       return matchesFilter && matchesSearch;
     });
-  }, [selectedFilter, searchTerm]);
+  }, [selectedFilter, searchTerm, auditData]);
 
   const getStatusColor = (outcome) => {
     if (outcome.includes('Successful')) return 'text-green-400';
@@ -117,207 +117,216 @@ const AuditTrail = () => {
     <div className="min-h-screen bg-slate-900 text-gray-100">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      {/* Header */}
-      <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Railway Control Center</h1>
-            <p className="text-sm text-gray-400 mt-1">Audit Trail - Station Alpha | 14:23:45 | 15 Active Sessions</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-2">
-              <Download className="w-4 h-4" />
-              <span>Export Logs</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Filters and Search */}
-      <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-700">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <select 
-                value={selectedFilter} 
-                onChange={(e) => setSelectedFilter(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Events</option>
-                <option value="overrides">Manual Overrides</option>
-                <option value="conflicts">Conflict Resolutions</option>
-                <option value="incidents">Linked Incidents</option>
-                <option value="emergency">Emergency Actions</option>
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <select 
-                value={timeRange} 
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="today">Today</option>
-                <option value="week">Last 7 Days</option>
-                <option value="month">Last 30 Days</option>
-                <option value="custom">Custom Range</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search trains, controllers, sections..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 w-72"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex">
-        {/* Main Audit List */}
-        <div className="flex-1 p-6">
-          <div className="bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700">
-              <h2 className="text-lg font-semibold text-white">Audit Trail Entries</h2>
-              <p className="text-sm text-gray-400 mt-1">{filteredData.length} entries found</p>
-            </div>
-            
-            <div className="divide-y divide-slate-700">
-              {filteredData.map((entry) => (
-                <div 
-                  key={entry.id}
-                  className="px-6 py-4 hover:bg-slate-700/50 cursor-pointer transition-colors"
-                  onClick={() => setSelectedEntry(entry)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(entry.priority)}`}>
-                          {entry.priority}
-                        </span>
-                        <span className="text-sm font-medium text-white">{entry.trainId}</span>
-                        <span className="text-sm text-gray-400">{entry.section}</span>
-                        {entry.linkedIncident && (
-                          <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                        )}
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-400">Action:</span>
-                          <span className="ml-2 text-white">{entry.action}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Controller:</span>
-                          <span className="ml-2 text-white flex items-center">
-                            <User className="w-3 h-3 mr-1" />
-                            {entry.controller}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {entry.overrideReason && (
-                        <div className="mt-2 text-sm">
-                          <span className="text-yellow-400">Override Reason:</span>
-                          <span className="ml-2 text-gray-300">{entry.overrideReason}</span>
-                        </div>
-                      )}
-                      
-                      <div className="mt-2 text-sm">
-                        <span className="text-gray-400">Outcome:</span>
-                        <span className={`ml-2 ${getStatusColor(entry.outcome)}`}>{entry.outcome}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-xs text-gray-400 mb-1">
-                        {new Date(entry.timestamp).toLocaleTimeString()}
-                      </div>
-                      <button className="text-blue-400 hover:text-blue-300">
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Detail Panel */}
-        {selectedEntry && (
-          <div className="w-96 bg-slate-800 border-l border-slate-700 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Entry Details</h3>
+      {/* Main Content Wrapper */}
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        {/* Header */}
+        <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+               {/* Sidebar Toggle Button */}
               <button 
-                onClick={() => setSelectedEntry(null)}
-                className="text-gray-400 hover:text-white"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="text-gray-300 hover:text-white"
               >
-                ×
+              </button>
+              <div className={sidebarOpen? `px-2` : `px-8`}>
+                <h1 className="text-2xl font-bold text-white">Railway Control Center</h1>
+                <p className="text-sm text-gray-400 mt-1">Audit Trail - Station Alpha | 14:23:45 | 15 Active Sessions</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-2">
+                <Download className="w-4 h-4" />
+                <span>Export Logs</span>
               </button>
             </div>
-            
-            <div className="space-y-4">
-              <div className="bg-slate-700/50 rounded-lg p-4">
-                <h4 className="font-medium text-white mb-2">Decision Trail</h4>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-gray-400">AI Recommendation:</span>
-                    <p className="text-green-400 mt-1">{selectedEntry.aiRecommendation}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Actual Decision:</span>
-                    <p className="text-blue-400 mt-1">{selectedEntry.actualDecision}</p>
-                  </div>
-                </div>
-              </div>
+          </div>
+        </div>
 
-              <div className="bg-slate-700/50 rounded-lg p-4">
-                <h4 className="font-medium text-white mb-2">Context Data</h4>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-gray-400">Conflict Type:</span>
-                    <span className="ml-2 text-white">{selectedEntry.conflictType}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Weather:</span>
-                    <span className="ml-2 text-white">{selectedEntry.weatherCondition}</span>
-                  </div>
-                  {selectedEntry.linkedIncident && (
-                    <div>
-                      <span className="text-gray-400">Linked Incident:</span>
-                      <span className="ml-2 text-yellow-400">{selectedEntry.linkedIncident}</span>
+        {/* Filters and Search */}
+        <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-700">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-gray-400" />
+                <select 
+                  value={selectedFilter} 
+                  onChange={(e) => setSelectedFilter(e.target.value)}
+                  className="bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Events</option>
+                  <option value="overrides">Manual Overrides</option>
+                  <option value="conflicts">Conflict Resolutions</option>
+                  <option value="incidents">Linked Incidents</option>
+                  <option value="emergency">Emergency Actions</option>
+                </select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <select 
+                  value={timeRange} 
+                  onChange={(e) => setTimeRange(e.target.value)}
+                  className="bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="today">Today</option>
+                  <option value="today">Yesterday</option>
+                  <option value="week">Last 7 Days</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Search className="w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search trains, controllers, sections..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-slate-700 border border-slate-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-72"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex">
+          {/* Main Audit List */}
+          <div className="flex-1 p-6">
+            <div className="bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700">
+                <h2 className="text-lg font-semibold text-white">Audit Trail Entries</h2>
+                <p className="text-sm text-gray-400 mt-1">{filteredData.length} entries found</p>
+              </div>
+              
+              <div className="divide-y divide-slate-700 max-h-[calc(100vh-250px)] overflow-y-auto">
+                {filteredData.map((entry) => (
+                  <div 
+                    key={entry.id}
+                    className={`px-6 py-4 hover:bg-slate-700/50 cursor-pointer transition-colors ${selectedEntry?.id === entry.id ? 'bg-slate-700' : ''}`}
+                    onClick={() => setSelectedEntry(entry)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(entry.priority)}`}>
+                            {entry.priority}
+                          </span>
+                          <span className="text-sm font-medium text-white">{entry.trainId}</span>
+                          <span className="text-sm text-gray-400">{entry.section}</span>
+                          {entry.linkedIncident && (
+                            <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-400">Action:</span>
+                            <span className="ml-2 text-white">{entry.action}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Controller:</span>
+                            <span className="ml-2 text-white flex items-center">
+                              <User className="w-3 h-3 mr-1" />
+                              {entry.controller}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {entry.overrideReason && (
+                          <div className="mt-2 text-sm">
+                            <span className="text-yellow-400">Override Reason:</span>
+                            <span className="ml-2 text-gray-300">{entry.overrideReason}</span>
+                          </div>
+                        )}
+                        
+                        <div className="mt-2 text-sm">
+                          <span className="text-gray-400">Outcome:</span>
+                          <span className={`ml-2 ${getStatusColor(entry.outcome)}`}>{entry.outcome}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <div className="text-xs text-gray-400 mb-1">
+                          {new Date(entry.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-slate-700/50 rounded-lg p-4">
-                <h4 className="font-medium text-white mb-2">Data Sources</h4>
-                <div className="space-y-1">
-                  {selectedEntry.dataSource.map((source, index) => (
-                    <div key={index} className="text-sm text-gray-300 flex items-center">
-                      <Settings className="w-3 h-3 mr-2" />
-                      {source}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-slate-700/50 rounded-lg p-4">
-                <h4 className="font-medium text-white mb-2">Timestamps</h4>
-                <div className="text-xs text-gray-400">
-                  <div>Created: {new Date(selectedEntry.timestamp).toLocaleString()}</div>
-                  <div className="mt-1">ID: {selectedEntry.id}</div>
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        )}
+
+          {/* Detail Panel */}
+          {selectedEntry && (
+            <div className="w-[450px] bg-slate-800 border-l border-slate-700 p-6 flex-shrink-0">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Entry Details</h3>
+                <button 
+                  onClick={() => setSelectedEntry(null)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="space-y-4 max-h-[calc(100vh-180px)] overflow-y-auto">
+                <div className="bg-slate-700/50 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">Decision Trail</h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-400">AI Recommendation:</span>
+                      <p className="text-green-400 mt-1">{selectedEntry.aiRecommendation}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Actual Decision:</span>
+                      <p className="text-blue-400 mt-1">{selectedEntry.actualDecision}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-700/50 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">Context Data</h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-400">Conflict Type:</span>
+                      <span className="ml-2 text-white">{selectedEntry.conflictType}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Weather:</span>
+                      <span className="ml-2 text-white">{selectedEntry.weatherCondition}</span>
+                    </div>
+                    {selectedEntry.linkedIncident && (
+                      <div>
+                        <span className="text-gray-400">Linked Incident:</span>
+                        <span className="ml-2 text-yellow-400">{selectedEntry.linkedIncident}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-slate-700/50 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">Data Sources</h4>
+                  <div className="space-y-1">
+                    {selectedEntry.dataSource.map((source, index) => (
+                      <div key={index} className="text-sm text-gray-300 flex items-center">
+                        <Settings className="w-3 h-3 mr-2" />
+                        {source}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-slate-700/50 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">Timestamps</h4>
+                  <div className="text-xs text-gray-400">
+                    <div>Created: {new Date(selectedEntry.timestamp).toLocaleString()}</div>
+                    <div className="mt-1">ID: {selectedEntry.id}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
