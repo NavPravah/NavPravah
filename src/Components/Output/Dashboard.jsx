@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Clock, Train, Users, Zap, Cloud, Settings, Activity, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import {
+  AlertTriangle, Clock, Train, Users, Zap, Cloud, Settings, Activity, TrendingUp, TrendingDown, Minus
+} from 'lucide-react';
+import Sidebar from '../Sidebar/Sidebar';
 
+// Main Dashboard Component
 const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [alertsExpanded, setAlertsExpanded] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -59,7 +64,7 @@ const Dashboard = () => {
   ];
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'occupied': return 'bg-red-600';
       case 'clearing': return 'bg-yellow-600';
       case 'available': return 'bg-green-600';
@@ -69,7 +74,7 @@ const Dashboard = () => {
   };
 
   const getSeverityColor = (severity) => {
-    switch(severity) {
+    switch (severity) {
       case 'high': return 'text-red-400 bg-red-900/20';
       case 'medium': return 'text-yellow-400 bg-yellow-900/20';
       case 'low': return 'text-green-400 bg-green-900/20';
@@ -83,305 +88,308 @@ const Dashboard = () => {
     return { icon: Minus, color: 'text-yellow-400' };
   };
 
-  return (
+  return (  
     <div className="min-h-screen bg-slate-900 text-gray-100">
-      {/* Header */}
-      <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Railway Control Center</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              Real-Time Dashboard - Station Alpha | {currentTime.toLocaleTimeString()} | 3 Controllers Active
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-300">System Operational</span>
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+
+      {/* Main Content */}
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        {/* Header */}
+        <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-0' : 'ml-12'}`}>
+              <h1 className="text-2xl font-bold text-white">Railway Control Center</h1>
+              <p className="text-sm text-gray-400 mt-1">
+                Real-Time Dashboard - Station Alpha | {currentTime.toLocaleTimeString()} | 3 Controllers Active
+              </p>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium">
-              Emergency Override
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-6 space-y-6">
-        {/* Key Metrics Row with AI Actions in Center */}
-  <div className="flex justify-center items-center mx-12 gap-6">
-          {/* Left Metrics */}
-          <div className="flex gap-6">
-            {Object.entries(systemMetrics).slice(0, 2).map(([key, data]) => {
-              const trend = getMetricTrend(data.current, data.target);
-              const TrendIcon = trend.icon;
-              
-              return (
-                <div key={key} className="bg-slate-800 rounded-lg border border-slate-700 p-4" style={{ minWidth: '12vw' }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-400 uppercase tracking-wide">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </span>
-                    <TrendIcon className={`w-4 h-4 ${trend.color}`} />
-                  </div>
-                  <div className="flex items-baseline space-x-1">
-                    <span className="text-2xl font-bold text-white">{data.current}</span>
-                    <span className="text-sm text-gray-400">{data.unit}</span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {data.target ? `Target: ${data.target}${data.unit}` : ''}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Center AI Actions */}
-          <div className="bg-slate-800 rounded-lg border border-slate-700 p-3 mx-6 flex flex-col items-center" style={{ minWidth: '20vw' }}>
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center">
-              <Zap className="w-4 h-4 mr-2 text-yellow-400" />
-              AI vs Controller Actions (Last Hour)
-            </h3>
-            <div className="grid grid-cols-3 gap-4 w-full">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-400">20</div>
-                <div className="text-xs text-gray-400">AI Accepted</div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-300">System Operational</span>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-400">2</div>
-                <div className="text-xs text-gray-400">Manual Override</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-400">1</div>
-                <div className="text-xs text-gray-400">Emergency</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Metrics */}
-          <div className="flex gap-6">
-            {Object.entries(systemMetrics).slice(2, 4).map(([key, data]) => {
-              const trend = getMetricTrend(data.current, data.target);
-              const TrendIcon = trend.icon;
-              
-              return (
-                <div key={key} className="bg-slate-800 rounded-lg border border-slate-700 p-4" style={{ minWidth: '12vw' }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-400 uppercase tracking-wide">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </span>
-                    <TrendIcon className={`w-4 h-4 ${trend.color}`} />
-                  </div>
-                  <div className="flex items-baseline space-x-1">
-                    <span className="text-2xl font-bold text-white">{data.current}</span>
-                    <span className="text-sm text-gray-400">{data.unit}</span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {data.target ? `Target: ${data.target}${data.unit}` : ''}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-12 gap-6">
-          {/* Current Delays */}
-          <div className="col-span-4 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <Clock className="w-5 h-5 mr-2 text-yellow-400" />
-                Current Delays
-              </h2>
-              <span className="text-sm text-gray-400">{currentDelays.length} trains</span>
-            </div>
-            <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-              {currentDelays.map((train, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-medium text-white">{train.trainId}</span>
-                      <span className={`px-2 py-1 rounded-full text-xs ${getSeverityColor(train.severity)}`}>
-                        +{train.delay}min
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-400">{train.section}</div>
-                  </div>
-                  <div className="text-right text-sm">
-                    <div className="text-gray-300">ETA: {train.eta}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Train Priority Queue */}
-          <div className="col-span-4 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <Train className="w-5 h-5 mr-2 text-blue-400" />
-                Train Queue
-              </h2>
-              <span className="text-sm text-gray-400">{trainQueue.length} in queue</span>
-            </div>
-            <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-              {trainQueue.map((train, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-medium text-white">{train.trainId}</span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        train.priority === 'Express' ? 'bg-red-600' :
-                        train.priority === 'Local' ? 'bg-green-600' : 'bg-gray-600'
-                      }`}>
-                        {train.priority}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-400">{train.platform} • {train.status}</div>
-                    {train.passengers > 0 && (
-                      <div className="text-xs text-gray-500 flex items-center mt-1">
-                        <Users className="w-3 h-3 mr-1" />
-                        {train.passengers} passengers
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-right text-sm">
-                    <div className="text-gray-300">{train.eta}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Platform Status */}
-          <div className="col-span-4 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <Activity className="w-5 h-5 mr-2 text-green-400" />
-                Platform Status
-              </h2>
-              <span className="text-sm text-gray-400">6 platforms</span>
-            </div>
-            <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-              {platformStatus.map((platform, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <div className={`w-3 h-3 rounded-full ${getStatusColor(platform.status)}`}></div>
-                    <div>
-                      <div className="font-medium text-white">{platform.id}</div>
-                      <div className="text-sm text-gray-400">
-                        {platform.train || platform.status}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right text-sm">
-                    {platform.timeRemaining && (
-                      <div className="text-gray-300">{platform.timeRemaining}</div>
-                    )}
-                    <div className="text-xs text-gray-500">{platform.capacity}% capacity</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-12 gap-6">
-          {/* Predicted Conflicts */}
-          <div className="col-span-6 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <AlertTriangle className="w-5 h-5 mr-2 text-orange-400" />
-                Predicted Conflicts
-              </h2>
-              <span className="text-sm text-gray-400">{predictedConflicts.length} conflicts</span>
-            </div>
-            <div className="p-4 space-y-3">
-              {predictedConflicts.map((conflict, index) => (
-                <div key={index} className="p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-white">{conflict.time}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${getSeverityColor(conflict.severity)}`}>
-                      {conflict.severity}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-300 mb-1">
-                    {conflict.trains.join(' ↔ ')} at {conflict.location}
-                  </div>
-                  <div className="text-xs text-blue-400">
-                    Resolution: {conflict.resolution}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Weather & Alerts */}
-          <div className="col-span-3 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <Cloud className="w-5 h-5 mr-2 text-cyan-400" />
-                Weather & Alerts
-              </h2>
-              <button 
-                onClick={() => setAlertsExpanded(!alertsExpanded)}
-                className="text-sm text-gray-400 hover:text-white"
-              >
-                {alertsExpanded ? 'Less' : 'More'}
+              <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium">
+                Emergency Override
               </button>
             </div>
-            <div className="p-4 space-y-3">
-              {weatherAlerts.map((alert, index) => (
-                <div key={index} className="p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-white">{alert.type}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${getSeverityColor(alert.severity)}`}>
-                      {alert.severity}
-                    </span>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Key Metrics Row with AI Actions in Center */}
+          <div className="flex justify-center items-center mx-12 gap-6">
+            {/* Left Metrics */}
+            <div className="flex gap-6">
+              {Object.entries(systemMetrics).slice(0, 2).map(([key, data]) => {
+                const trend = getMetricTrend(data.current, data.target);
+                const TrendIcon = trend.icon;
+
+                return (
+                  <div key={key} className="bg-slate-800 rounded-lg border border-slate-700 p-4" style={{ minWidth: '12vw' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-400 uppercase tracking-wide">
+                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                      </span>
+                      <TrendIcon className={`w-4 h-4 ${trend.color}`} />
+                    </div>
+                    <div className="flex items-baseline space-x-1">
+                      <span className="text-2xl font-bold text-white">{data.current}</span>
+                      <span className="text-sm text-gray-400">{data.unit}</span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {data.target ? `Target: ${data.target}${data.unit}` : ''}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-400 mb-1">{alert.affected}</div>
-                  <div className="text-xs text-gray-500">{alert.impact}</div>
-                  {alert.visibility && (
-                    <div className="text-xs text-orange-400 mt-1">Visibility: {alert.visibility}</div>
-                  )}
-                  {alert.temp && (
-                    <div className="text-xs text-red-400 mt-1">Temperature: {alert.temp}</div>
-                  )}
+                );
+              })}
+            </div>
+
+            {/* Center AI Actions */}
+            <div className="bg-slate-800 rounded-lg border border-slate-700 p-3 mx-6 flex flex-col items-center" style={{ minWidth: '20vw' }}>
+              <h3 className="text-sm font-semibold text-white mb-4 flex items-center">
+                <Zap className="w-4 h-4 mr-2 text-yellow-400" />
+                AI vs Controller Actions (Last Hour)
+              </h3>
+              <div className="grid grid-cols-3 gap-4 w-full">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">20</div>
+                  <div className="text-xs text-gray-400">AI Accepted</div>
                 </div>
-              ))}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-400">2</div>
+                  <div className="text-xs text-gray-400">Manual Override</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-400">1</div>
+                  <div className="text-xs text-gray-400">Emergency</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Metrics */}
+            <div className="flex gap-6">
+              {Object.entries(systemMetrics).slice(2, 4).map(([key, data]) => {
+                const trend = getMetricTrend(data.current, data.target);
+                const TrendIcon = trend.icon;
+
+                return (
+                  <div key={key} className="bg-slate-800 rounded-lg border border-slate-700 p-4" style={{ minWidth: '12vw' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-400 uppercase tracking-wide">
+                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                      </span>
+                      <TrendIcon className={`w-4 h-4 ${trend.color}`} />
+                    </div>
+                    <div className="flex items-baseline space-x-1">
+                      <span className="text-2xl font-bold text-white">{data.current}</span>
+                      <span className="text-sm text-gray-400">{data.unit}</span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {data.target ? `Target: ${data.target}${data.unit}` : ''}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Maintenance Blocks */}
-          <div className="col-span-3 bg-slate-800 rounded-lg border border-slate-700">
-            <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center">
-                <Settings className="w-5 h-5 mr-2 text-purple-400" />
-                Maintenance
-              </h2>
-              <span className="text-sm text-gray-400">{maintenanceBlocks.length} blocks</span>
+          <div className="grid grid-cols-12 gap-6">
+            {/* Current Delays */}
+            <div className="col-span-4 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-yellow-400" />
+                  Current Delays
+                </h2>
+                <span className="text-sm text-gray-400">{currentDelays.length} trains</span>
+              </div>
+              <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+                {currentDelays.map((train, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-medium text-white">{train.trainId}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs ${getSeverityColor(train.severity)}`}>
+                          +{train.delay}min
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-400">{train.section}</div>
+                    </div>
+                    <div className="text-right text-sm">
+                      <div className="text-gray-300">ETA: {train.eta}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="p-4 space-y-3">
-              {maintenanceBlocks.map((block, index) => (
-                <div key={index} className="p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-white">{block.track}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      block.status === 'Active' ? 'bg-blue-600' :
-                      block.status === 'Scheduled' ? 'bg-yellow-600' : 'bg-red-600'
-                    }`}>
-                      {block.status}
-                    </span>
+
+            {/* Train Priority Queue */}
+            <div className="col-span-4 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <Train className="w-5 h-5 mr-2 text-blue-400" />
+                  Train Queue
+                </h2>
+                <span className="text-sm text-gray-400">{trainQueue.length} in queue</span>
+              </div>
+              <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+                {trainQueue.map((train, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-medium text-white">{train.trainId}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${train.priority === 'Express' ? 'bg-red-600' :
+                            train.priority === 'Local' ? 'bg-green-600' : 'bg-gray-600'
+                          }`}>
+                          {train.priority}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-400">{train.platform} • {train.status}</div>
+                      {train.passengers > 0 && (
+                        <div className="text-xs text-gray-500 flex items-center mt-1">
+                          <Users className="w-3 h-3 mr-1" />
+                          {train.passengers} passengers
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right text-sm">
+                      <div className="text-gray-300">{train.eta}</div>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-400 mb-1">{block.type}</div>
-                  <div className="text-xs text-gray-500">{block.crew}</div>
-                  <div className={`text-xs mt-1 ${
-                    block.remaining.includes('-') ? 'text-red-400' : 'text-gray-300'
-                  }`}>
-                    {block.remaining.includes('-') ? 'Overrun: ' : 'Remaining: '}
-                    {block.remaining}
+                ))}
+              </div>
+            </div>
+
+            {/* Platform Status */}
+            <div className="col-span-4 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <Activity className="w-5 h-5 mr-2 text-green-400" />
+                  Platform Status
+                </h2>
+                <span className="text-sm text-gray-400">6 platforms</span>
+              </div>
+              <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+                {platformStatus.map((platform, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(platform.status)}`}></div>
+                      <div>
+                        <div className="font-medium text-white">{platform.id}</div>
+                        <div className="text-sm text-gray-400">
+                          {platform.train || platform.status}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm">
+                      {platform.timeRemaining && (
+                        <div className="text-gray-300">{platform.timeRemaining}</div>
+                      )}
+                      <div className="text-xs text-gray-500">{platform.capacity}% capacity</div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-12 gap-6">
+            {/* Predicted Conflicts */}
+            <div className="col-span-6 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <AlertTriangle className="w-5 h-5 mr-2 text-orange-400" />
+                  Predicted Conflicts
+                </h2>
+                <span className="text-sm text-gray-400">{predictedConflicts.length} conflicts</span>
+              </div>
+              <div className="p-4 space-y-3">
+                {predictedConflicts.map((conflict, index) => (
+                  <div key={index} className="p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-white">{conflict.time}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${getSeverityColor(conflict.severity)}`}>
+                        {conflict.severity}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-300 mb-1">
+                      {conflict.trains.join(' ↔ ')} at {conflict.location}
+                    </div>
+                    <div className="text-xs text-blue-400">
+                      Resolution: {conflict.resolution}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Weather & Alerts */}
+            <div className="col-span-3 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <Cloud className="w-5 h-5 mr-2 text-cyan-400" />
+                  Weather & Alerts
+                </h2>
+                <button
+                  onClick={() => setAlertsExpanded(!alertsExpanded)}
+                  className="text-sm text-gray-400 hover:text-white"
+                >
+                  {alertsExpanded ? 'Less' : 'More'}
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                {weatherAlerts.map((alert, index) => (
+                  <div key={index} className="p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-white">{alert.type}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${getSeverityColor(alert.severity)}`}>
+                        {alert.severity}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-400 mb-1">{alert.affected}</div>
+                    <div className="text-xs text-gray-500">{alert.impact}</div>
+                    {alert.visibility && (
+                      <div className="text-xs text-orange-400 mt-1">Visibility: {alert.visibility}</div>
+                    )}
+                    {alert.temp && (
+                      <div className="text-xs text-red-400 mt-1">Temperature: {alert.temp}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Maintenance Blocks */}
+            <div className="col-span-3 bg-slate-800 rounded-lg border border-slate-700">
+              <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white flex items-center">
+                  <Settings className="w-5 h-5 mr-2 text-purple-400" />
+                  Maintenance
+                </h2>
+                <span className="text-sm text-gray-400">{maintenanceBlocks.length} blocks</span>
+              </div>
+              <div className="p-4 space-y-3">
+                {maintenanceBlocks.map((block, index) => (
+                  <div key={index} className="p-3 bg-slate-700/50 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-white">{block.track}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${block.status === 'Active' ? 'bg-blue-600' :
+                          block.status === 'Scheduled' ? 'bg-yellow-600' : 'bg-red-600'
+                        }`}>
+                        {block.status}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-400 mb-1">{block.type}</div>
+                    <div className="text-xs text-gray-500">{block.crew}</div>
+                    <div className={`text-xs mt-1 ${block.remaining.includes('-') ? 'text-red-400' : 'text-gray-300'
+                      }`}>
+                      {block.remaining.includes('-') ? 'Overrun: ' : 'Remaining: '}
+                      {block.remaining}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

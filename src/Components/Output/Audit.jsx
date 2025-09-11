@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Download, Eye, AlertTriangle, Clock, User, Settings } from 'lucide-react';
+import Sidebar from '../Sidebar/Sidebar';
 
 const AuditTrail = () => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [timeRange, setTimeRange] = useState('today');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Sample audit data
   const auditData = [
@@ -113,6 +115,8 @@ const AuditTrail = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-gray-100">
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       {/* Header */}
       <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -235,7 +239,6 @@ const AuditTrail = () => {
                         {new Date(entry.timestamp).toLocaleTimeString()}
                       </div>
                       <button className="text-blue-400 hover:text-blue-300">
-                        <Eye className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

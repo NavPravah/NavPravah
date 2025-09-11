@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, TrendingDown, Calendar, Download, Filter, Target, Award, AlertCircle, CheckCircle, Clock, Users, Zap, Settings, Activity } from 'lucide-react';
+import Sidebar from '../Sidebar/Sidebar';
 
 const PerformanceTrends = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('7days');
   const [selectedKPI, setSelectedKPI] = useState('punctuality');
   const [comparisonMode, setComparisonMode] = useState('target');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Historical performance data
   const performanceData = {
@@ -112,6 +114,8 @@ const PerformanceTrends = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-gray-100">
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       {/* Header */}
       <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
         <div className="flex items-center justify-between">
