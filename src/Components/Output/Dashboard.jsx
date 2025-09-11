@@ -109,7 +109,7 @@ const Dashboard = () => {
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-sm text-gray-300">System Operational</span>
               </div>
-              <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium">
+              <button className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md text-sm font-medium">
                 Emergency Override
               </button>
             </div>
