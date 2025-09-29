@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
 import {
   X, Clock, Zap, MapPin, AlertTriangle, ArrowRight, ArrowLeft,
   Bell, User, ChevronDown, Search, Activity, Wifi, Database,
@@ -6,7 +8,10 @@ import {
 } from 'lucide-react';
 import Sidebar from '../Sidebar/Sidebar';
 
-// TrainSvg Component
+// ====== CONFIG ======
+const API_URL = 'http://127.0.0.1:5000/optimize';
+
+// ====== TrainSvg ======
 const TrainSvg = ({ color, direction, trainId }) => {
   return (
     <div className="relative">
@@ -37,45 +42,51 @@ const TrainSvg = ({ color, direction, trainId }) => {
   );
 };
 
-// Track Graph Definition (matching third image node names)
+// ====== TRACK SECTIONS ======
 const TRACK_SECTIONS = {
-  // Approach sections
-  'A1': { x: 100, y: 130, connections: ['J1'] },
-  'A2': { x: 100, y: 230, connections: ['J2'] },
-  'A3': { x: 100, y: 330, connections: ['J3'] },
-
-  // Junction sections
-  'J1': { x: 200, y: 130, connections: ['P1A', 'J2'] },
-  'J2': { x: 200, y: 230, connections: ['P2A', 'J1', 'J3'] },
-  'J3': { x: 200, y: 330, connections: ['P3A', 'J2'] },
-
-  // Platform approach sections
-  'P1A': { x: 350, y: 130, connections: ['P1'] },
-  'P2A': { x: 350, y: 230, connections: ['P2'] },
-  'P3A': { x: 350, y: 330, connections: ['P3'] },
-
-  // Platform sections (stations)
-  'P1': { x: 500, y: 130, connections: ['P1D'], isStation: true, platform: 1 },
-  'P2': { x: 500, y: 230, connections: ['P2D'], isStation: true, platform: 2 },
-  'P3': { x: 500, y: 330, connections: ['P3D'], isStation: true, platform: 3 },
-
-  // Platform departure sections
-  'P1D': { x: 650, y: 130, connections: ['J4'] },
-  'P2D': { x: 650, y: 230, connections: ['J5'] },
-  'P3D': { x: 650, y: 330, connections: ['J6'] },
-
-  // Exit junction sections
-  'J4': { x: 750, y: 130, connections: ['E1', 'J5'] },
-  'J5': { x: 750, y: 230, connections: ['E2', 'J4', 'J6'] },
-  'J6': { x: 750, y: 330, connections: ['E3', 'J5'] },
-
-  // Exit sections
-  'E1': { x: 850, y: 130, connections: [] },
-  'E2': { x: 850, y: 230, connections: [] },
-  'E3': { x: 850, y: 330, connections: [] },
+  // Entry nodes
+  Entry_1: { x: 50, y: 130, connections: ['A'] },
+  Entry_4: { x: 50, y: 230, connections: ['A2'] },
+  Entry_5: { x: 50, y: 330, connections: ['A3'] },
+  Entry_9: { x: 950, y: 230, connections: [] },
+  Entry_11: { x: 950, y: 330, connections: [] },
+  Entry_12: { x: 950, y: 130, connections: [] },
+  
+  // Path nodes from optimization API
+  A: { x: 150, y: 130, connections: ['P1_entry'] },
+  B: { x: 150, y: 330, connections: ['P2_entry'] },
+  P1_entry: { x: 350, y: 130, connections: ['P1_exit'] },
+  P2_entry: { x: 350, y: 330, connections: ['P2_exit'] },
+  P1_exit: { x: 650, y: 130, connections: ['F'] },
+  P2_exit: { x: 650, y: 330, connections: ['E'] },
+  F: { x: 750, y: 130, connections: ['Entry_12', 'E'] },
+  E: { x: 750, y: 230, connections: ['Entry_9', 'Entry_11'] },
+  
+  // Original sections for fallback
+  A1: { x: 100, y: 130, connections: ['J1'] },
+  A2: { x: 100, y: 230, connections: ['J2'] },
+  A3: { x: 100, y: 330, connections: ['J3'] },
+  J1: { x: 200, y: 130, connections: ['P1A', 'J2'] },
+  J2: { x: 200, y: 230, connections: ['P2A', 'J1', 'J3'] },
+  J3: { x: 200, y: 330, connections: ['P3A', 'J2'] },
+  P1A: { x: 350, y: 130, connections: ['P1'] },
+  P2A: { x: 350, y: 230, connections: ['P2'] },
+  P3A: { x: 350, y: 330, connections: ['P3'] },
+  P1: { x: 500, y: 130, connections: ['P1D'], isStation: true, platform: 1 },
+  P2: { x: 500, y: 230, connections: ['P2D'], isStation: true, platform: 2 },
+  P3: { x: 500, y: 330, connections: ['P3D'], isStation: true, platform: 3 },
+  P1D: { x: 650, y: 130, connections: ['J4'] },
+  P2D: { x: 650, y: 230, connections: ['J5'] },
+  P3D: { x: 650, y: 330, connections: ['J6'] },
+  J4: { x: 750, y: 130, connections: ['E1', 'J5'] },
+  J5: { x: 750, y: 230, connections: ['E2', 'J4', 'J6'] },
+  J6: { x: 750, y: 330, connections: ['E3', 'J5'] },
+  E1: { x: 850, y: 130, connections: [] },
+  E2: { x: 850, y: 230, connections: [] },
+  E3: { x: 850, y: 330, connections: [] },
 };
 
-// Global Header Component
+// ====== GlobalHeader ======
 const GlobalHeader = ({ isLive, setIsLive, currentTime, sidebarOpen, setSidebarOpen }) => {
   const [notifications, setNotifications] = useState(1);
 
@@ -95,8 +106,7 @@ const GlobalHeader = ({ isLive, setIsLive, currentTime, sidebarOpen, setSidebarO
   };
 
   return (
-    <header className={`bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between fixed top-0 right-0 z-50 transition-all duration-300 ${sidebarOpen ? 'left-64' : 'left-0'
-      }`}>
+    <header className={`bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between fixed top-0 right-0 z-50 transition-all duration-300 ${sidebarOpen ? 'left-64' : 'left-0'}`}>
       <div className="flex items-center gap-4">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -152,7 +162,7 @@ const GlobalHeader = ({ isLive, setIsLive, currentTime, sidebarOpen, setSidebarO
   );
 };
 
-// Left Panel Component
+// ====== LeftPanel ======
 const LeftPanel = ({ isOpen, setIsOpen, sidebarOpen }) => {
   const [activeTab, setActiveTab] = useState('alerts');
 
@@ -163,20 +173,8 @@ const LeftPanel = ({ isOpen, setIsOpen, sidebarOpen }) => {
   ];
 
   const recommendations = [
-    {
-      id: 1,
-      title: 'Re-platform train 22104 to P6',
-      impact: 'Est. Punctuality +6% | Resolves P5 Conflict',
-      confidence: 95,
-      type: 'routing'
-    },
-    {
-      id: 2,
-      title: 'Delay train EXP-401 by 3 minutes',
-      impact: 'Prevents collision risk | +2% system efficiency',
-      confidence: 87,
-      type: 'scheduling'
-    }
+    { id: 1, title: 'Re-platform train 22104 to P6', impact: 'Est. Punctuality +6% | Resolves P5 Conflict', confidence: 95, type: 'routing' },
+    { id: 2, title: 'Delay train EXP-401 by 3 minutes', impact: 'Prevents collision risk | +2% system efficiency', confidence: 87, type: 'scheduling' }
   ];
 
   const getSeverityColor = (severity) => {
@@ -206,7 +204,7 @@ const LeftPanel = ({ isOpen, setIsOpen, sidebarOpen }) => {
       </button>
 
       <div
-        className="fixed top-16 h-[calc(100vh-4rem)] bg-gray-800 border-r border-gray-700 transition-all duration-300 z-40"
+        className="fixed top-16 h-[calc(100vh-4rem)] bg-gray-800 border-r border-gray-700 transition-all duration-300 z-40 overflow-y-auto"
         style={panelStyle}
       >
         <div className="bg-gray-700 p-4 border-b border-gray-600">
@@ -300,19 +298,28 @@ const LeftPanel = ({ isOpen, setIsOpen, sidebarOpen }) => {
   );
 };
 
+// ====== MAIN COMPONENT ======
 const TrainSimulationSystem = () => {
-  const [trains, setTrains] = useState([]);
+  const [pendingTrains, setPendingTrains] = useState([]); // Trains waiting for optimization
+  const [activeTrains, setActiveTrains] = useState([]); // Trains actually shown on map
   const [simulationTime, setSimulationTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [realTime, setRealTime] = useState(new Date().toLocaleTimeString());
   const [alerts, setAlerts] = useState([]);
   const [collisionOverride, setCollisionOverride] = useState({});
+  const [optimizationResults, setOptimizationResults] = useState(null);
   const [trainForm, setTrainForm] = useState({
     trainId: '',
+    trainType: '',
     scheduledTime: '',
     departureTime: '',
     startSection: '',
-    path: ''
+    path: '',
+    delayFactors: {
+      chainPullDelay: '',
+      locoPilotDelay: '',
+      mlWeatherDelay: ''
+    }
   });
   const [showForm, setShowForm] = useState(false);
   const [selectedTrain, setSelectedTrain] = useState(null);
@@ -320,8 +327,22 @@ const TrainSimulationSystem = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const intervalRef = useRef(null);
+  const trainTimeoutsRef = useRef(new Map()); // Store timeouts for train departures
 
-  // Update real time clock
+  // ====== HELPER FUNCTIONS ======
+  const todayISODate = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const hhmmToIsoLocal = (hhmm) => {
+    return `${todayISODate()}T${hhmm}:00`;
+  };
+
+  // ====== REAL TIME CLOCK ======
   useEffect(() => {
     const clockInterval = setInterval(() => {
       setRealTime(new Date().toLocaleTimeString());
@@ -329,7 +350,7 @@ const TrainSimulationSystem = () => {
     return () => clearInterval(clockInterval);
   }, []);
 
-  // Simulation timer - 5 simulation minutes per real second
+  // ====== SIMULATION TIMER ======
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
@@ -338,218 +359,365 @@ const TrainSimulationSystem = () => {
     } else {
       clearInterval(intervalRef.current);
     }
-
     return () => clearInterval(intervalRef.current);
   }, [isRunning]);
 
-  // Format simulation time to HH:MM
   const formatSimTime = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   };
 
-  // Convert time string to minutes
   const timeToMinutes = (timeStr) => {
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + minutes;
   };
 
-  // Add new train
+  // ====== API FUNCTIONS ======
+  const buildOptimizePayload = (trainList) => {
+    const trainsObj = {};
+    for (const t of trainList) {
+      const entry = t.path?.[0] || t.currentSection || t.startSection;
+      const exit = t.path?.[t.path.length - 1];
+      
+      const delayFactors = (t.delayFactors && 
+        (t.delayFactors.chainPullDelay || t.delayFactors.locoPilotDelay || t.delayFactors.mlWeatherDelay)) 
+        ? {
+            chain_pull_delay: parseInt(t.delayFactors.chainPullDelay) || 0,
+            loco_pilot_delay: parseInt(t.delayFactors.locoPilotDelay) || 0,
+            ml_weather_delay: parseInt(t.delayFactors.mlWeatherDelay) || 0
+          } 
+        : null;
+
+      trainsObj[t.id] = {
+        type: t.type || 'Passenger',
+        entry_node: entry,
+        exit_node: exit,
+        scheduled_entry_time: hhmmToIsoLocal(t._scheduledHHMM || '12:00'),
+        scheduled_exit_time: hhmmToIsoLocal(t._departureHHMM || '12:10'),
+        delay_factors: delayFactors
+      };
+    }
+    return {
+      trains: trainsObj,
+      non_functional_segments: []
+    };
+  };
+
+  const optimizeAndStartSimulation = async () => {
+    if (pendingTrains.length === 0) {
+      toast.error('No trains added to optimize');
+      return;
+    }
+
+    try {
+      const payload = buildOptimizePayload(pendingTrains);
+      console.log('Sending payload:', payload);
+      
+      const { data } = await axios.post(API_URL, payload, { timeout: 15000 });
+      console.log('API Response:', data);
+      
+      setOptimizationResults(data);
+      toast.success('Optimization completed successfully!');
+      
+      // Create active trains based on API response
+      if (data.recommendations) {
+        const newActiveTrains = pendingTrains.map(train => {
+          const recommendation = data.recommendations.find(r => r.train_id === train.id);
+          if (recommendation) {
+            const adjustedDeparture = train.departureTime + (recommendation.total_delay_minutes || 0);
+            
+            // For REROUTED trains, use the rerouted path instead of original
+            const finalPath = recommendation.action === 'REROUTED' 
+              ? recommendation.path 
+              : train.path;
+            
+            // Schedule departure timeout for PROCEED and REROUTED trains
+            if (recommendation.action === 'PROCEED' || recommendation.action === 'REROUTED') {
+              const departureTimeMs = adjustedDeparture * 60 * 1000; // Convert to milliseconds
+              const timeoutId = setTimeout(() => {
+                moveTrainToExit(train.id);
+              }, departureTimeMs);
+              trainTimeoutsRef.current.set(train.id, timeoutId);
+            }
+            
+            return {
+              ...train,
+              recommendedPath: recommendation.path,
+              totalDelay: recommendation.total_delay_minutes,
+              action: recommendation.action,
+              optimization: recommendation,
+              path: finalPath, // Use rerouted path if applicable
+              originalPath: train.path, // Keep original for reference
+              currentSection: finalPath?.[0] || train.currentSection,
+              currentSectionIndex: 0,
+              adjustedDepartureTime: adjustedDeparture,
+              status: 'waiting',
+              timeInCurrentSection: 0,
+              isVisible: false, // Will be shown based on 5-minute rule
+              showTime: train.scheduledTime - 5 // Show 5 minutes before scheduled time
+            };
+          }
+          return {
+            ...train,
+            isVisible: false,
+            action: 'HOLD', // Default to HOLD if no recommendation
+            showTime: train.scheduledTime - 5
+          };
+        });
+        
+        setActiveTrains(newActiveTrains);
+        // Clear pending trains as they're now active
+        setPendingTrains([]);
+      }
+    } catch (err) {
+      console.error('API Error:', err);
+      toast.error('Failed to apply optimization. Please try again later.');
+      setOptimizationResults(null);
+    }
+  };
+
+  // ====== TRAIN DEPARTURE LOGIC ======
+  const moveTrainToExit = (trainId) => {
+    setActiveTrains(prev => prev.map(train => {
+      if (train.id === trainId && (train.action === 'PROCEED' || train.action === 'REROUTED')) {
+        // Move train from entry to exit position
+        const exitSection = train.path[train.path.length - 1];
+        return {
+          ...train,
+          currentSection: exitSection,
+          currentSectionIndex: train.path.length - 1,
+          status: 'arrived'
+        };
+      }
+      return train;
+    }));
+    
+    // Clean up timeout
+    if (trainTimeoutsRef.current.has(trainId)) {
+      trainTimeoutsRef.current.delete(trainId);
+    }
+  };
+
+  // ====== ADD TRAIN ======
   const addTrain = () => {
-    if (!trainForm.trainId || !trainForm.scheduledTime || !trainForm.departureTime ||
-      !trainForm.startSection || !trainForm.path) {
-      alert('Please fill all fields');
+    if (
+      !trainForm.trainId ||
+      !trainForm.trainType ||
+      !trainForm.scheduledTime ||
+      !trainForm.departureTime ||
+      !trainForm.startSection ||
+      !trainForm.path
+    ) {
+      toast.error('Please fill all required fields');
       return;
     }
 
     const pathSections = trainForm.path.split(' ').filter(s => s.trim());
+
     const newTrain = {
       id: trainForm.trainId,
+      type: trainForm.trainType,
+      _scheduledHHMM: trainForm.scheduledTime,
+      _departureHHMM: trainForm.departureTime,
       scheduledTime: timeToMinutes(trainForm.scheduledTime),
       departureTime: timeToMinutes(trainForm.departureTime),
+      adjustedDepartureTime: timeToMinutes(trainForm.departureTime),
       path: pathSections,
       currentSectionIndex: 0,
       currentSection: pathSections[0],
       status: 'waiting',
-      priority: trains.length + 1,
+      priority: pendingTrains.length + 1,
       timeInCurrentSection: 0,
       stationArrivalTime: null,
-      isInStation: false
+      isInStation: false,
+      delayFactors: trainForm.delayFactors,
+      optimization: null,
+      action: null,
+      isVisible: false // Not visible until simulation starts and 5-minute rule
     };
 
-    setTrains(prev => [...prev, newTrain]);
+    setPendingTrains(prev => [...prev, newTrain]);
+    toast.success(`Train ${trainForm.trainId} added successfully. Start simulation to see it on the map.`);
+
+    // Reset form
     setTrainForm({
       trainId: '',
+      trainType: '',
       scheduledTime: '',
       departureTime: '',
       startSection: '',
-      path: ''
+      path: '',
+      delayFactors: {
+        chainPullDelay: '',
+        locoPilotDelay: '',
+        mlWeatherDelay: ''
+      }
     });
     setShowForm(false);
   };
 
-  // Check for collisions
-  const checkCollisions = (trainId, targetSection) => {
-    return trains.some(train =>
-      train.id !== trainId &&
-      train.currentSection === targetSection &&
-      train.status !== 'arrived'
-    );
-  };
-
-  // Move trains logic
+  // ====== TRAIN MOVEMENT LOGIC ======
   useEffect(() => {
-    setTrains(prevTrains => {
+    setActiveTrains(prevTrains => {
       const newAlerts = [];
 
       const updatedTrains = prevTrains.map(train => {
-        if (train.status === 'arrived') return train;
-
-        // Check if train should start
-        if (train.status === 'waiting' && simulationTime >= train.scheduledTime) {
-          return { ...train, status: 'moving' };
+        // 5-minute visibility rule: Show train 5 minutes before scheduled time
+        const shouldBeVisible = simulationTime >= (train.showTime || train.scheduledTime - 5);
+        
+        if (!shouldBeVisible) {
+          return { ...train, isVisible: false };
         }
 
-        if (train.status === 'moving') {
-          const currentSectionInfo = TRACK_SECTIONS[train.currentSection];
+        // Now the train should be visible
+        if (!train.isVisible) {
+          train = { ...train, isVisible: true };
+        }
 
-          // If in station, handle station time
-          if (currentSectionInfo?.isStation && !train.isInStation) {
-            const totalTravelTime = train.departureTime - train.scheduledTime;
-            const sectionsToTravel = train.path.length - 1;
-            const stationTime = Math.max(0, totalTravelTime - (sectionsToTravel * 12));
+        if (train.status === 'arrived') return train;
 
-            return {
-              ...train,
-              isInStation: true,
-              stationArrivalTime: simulationTime,
-              timeInCurrentSection: 0,
-              stationDwellTime: stationTime
-            };
+        // Handle HOLD action - train stays at entry position
+        if (train.action === 'HOLD') {
+          return { 
+            ...train, 
+            status: 'held',
+            currentSection: train.path[0] // Stay at entry
+          };
+        }
+
+        // Handle PROCEED and REROUTED actions
+        if (train.action === 'PROCEED' || train.action === 'REROUTED') {
+          // Start moving at scheduled time
+          if (train.status === 'waiting' && simulationTime >= train.scheduledTime) {
+            return { ...train, status: 'moving' };
           }
 
-          // Handle station dwelling
-          if (train.isInStation && currentSectionInfo?.isStation) {
-            const timeInStation = simulationTime - train.stationArrivalTime;
-            if (timeInStation < train.stationDwellTime) {
-              return train; // Stay in station
-            } else {
-              // Ready to leave station
-              return { ...train, isInStation: false, timeInCurrentSection: 0 };
+          // Move through the path based on simulation time
+          if (train.status === 'moving') {
+            const timeElapsed = simulationTime - train.scheduledTime;
+            const totalTravelTime = train.adjustedDepartureTime - train.scheduledTime;
+            const pathLength = train.path.length;
+            
+            if (timeElapsed >= totalTravelTime) {
+              // Reached destination
+              return {
+                ...train,
+                status: 'arrived',
+                currentSection: train.path[pathLength - 1],
+                currentSectionIndex: pathLength - 1
+              };
+            } else if (pathLength > 1) {
+              // Calculate current position based on time elapsed
+              const progressRatio = timeElapsed / totalTravelTime;
+              const targetIndex = Math.floor(progressRatio * (pathLength - 1));
+              const actualIndex = Math.min(Math.max(targetIndex, 0), pathLength - 1);
+              
+              return {
+                ...train,
+                currentSectionIndex: actualIndex,
+                currentSection: train.path[actualIndex],
+                timeInCurrentSection: 0
+              };
             }
           }
-
-          // Regular section movement (12 minutes per section)
-          const updatedTimeInSection = train.timeInCurrentSection + 5;
-
-          if (updatedTimeInSection >= 12 * 60) {
-            // Time to move to next section
-            const nextSectionIndex = train.currentSectionIndex + 1;
-
-            if (nextSectionIndex >= train.path.length) {
-              // Train has reached destination
-              return { ...train, status: 'arrived' };
-            }
-
-            const nextSection = train.path[nextSectionIndex];
-
-            // Check for collision
-            if (checkCollisions(train.id, nextSection) && !collisionOverride[train.id]) {
-              // Collision detected, stop train
-              newAlerts.push({
-                id: Date.now() + Math.random(),
-                trainId: train.id,
-                message: `Collision risk: Train ${train.id} cannot move to section ${nextSection}`,
-                type: 'collision',
-                targetSection: nextSection
-              });
-
-              return { ...train, status: 'stopped', timeInCurrentSection: updatedTimeInSection };
-            }
-
-            // Move to next section
-            return {
-              ...train,
-              currentSectionIndex: nextSectionIndex,
-              currentSection: nextSection,
-              timeInCurrentSection: 0
-            };
-          }
-
-          return { ...train, timeInCurrentSection: updatedTimeInSection };
         }
 
         return train;
       });
 
-      // Set new alerts
       if (newAlerts.length > 0) {
         setAlerts(prev => [...prev, ...newAlerts]);
       }
 
       return updatedTrains;
     });
-  }, [simulationTime, collisionOverride]);
+  }, [simulationTime]);
 
-  // Handle collision override
-  const handleOverride = (trainId, targetSection) => {
-    setCollisionOverride(prev => ({ ...prev, [trainId]: true }));
-
-    // Move the train to the target section (collision will occur)
-    setTrains(prevTrains =>
-      prevTrains.map(train => {
-        if (train.id === trainId) {
-          const nextSectionIndex = train.currentSectionIndex + 1;
-          return {
-            ...train,
-            currentSectionIndex: nextSectionIndex,
-            currentSection: targetSection,
-            timeInCurrentSection: 0,
-            status: 'moving'
-          };
-        }
-        return train;
-      })
-    );
-
-    // Remove the alert
-    setAlerts(prev => prev.filter(alert => alert.trainId !== trainId));
-  };
-
-  // Clear alert
-  const clearAlert = (alertId) => {
-    setAlerts(prev => prev.filter(alert => alert.id !== alertId));
-  };
-
-  // Reset simulation
+  // ====== EVENT HANDLERS ======
   const resetSimulation = () => {
     setSimulationTime(0);
     setIsRunning(false);
-    setTrains([]);
+    setActiveTrains([]);
+    setPendingTrains([]);
     setAlerts([]);
     setCollisionOverride({});
+    setOptimizationResults(null);
+    
+    // Clear all train timeouts
+    trainTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+    trainTimeoutsRef.current.clear();
+    
+    toast.success('Simulation reset');
   };
 
-  // Get train color based on status
   const getTrainColor = (train) => {
-    if (train.status === 'moving') return '#22c55e'; // Green
-    if (train.status === 'stopped') return '#ef4444'; // Red
-    if (train.status === 'waiting') return '#6b7280'; // Gray
-    if (train.status === 'arrived') return '#3b82f6'; // Blue
-    return '#6b7280';
+    // Color based on action - Green for PROCEED, Red for HOLD, Yellow for REROUTED
+    if (train.action === 'PROCEED') return '#22c55e'; // Green
+    if (train.action === 'HOLD') return '#ef4444'; // Red
+    if (train.action === 'REROUTED') return '#eab308'; // Yellow
+    
+    // Fallback to gray for trains without optimization
+    return '#6b7280'; // Gray
   };
 
-  // Train Modal Component
-  const TrainModal = ({ train, onClose, onOverride }) => {
+  // ====== TRAIN MODAL ======
+  const TrainModal = ({ train, onClose }) => {
     if (!train) return null;
 
     const getStatusText = (train) => {
-      if (train.status === 'moving') return 'RUNNING';
-      if (train.status === 'stopped') return 'STOPPED';
-      if (train.status === 'waiting') return 'WAITING';
-      if (train.status === 'arrived') return 'ARRIVED';
-      return 'UNKNOWN';
+      if (train.action === 'HOLD') return 'WAITING';
+      if (train.action === 'PROCEED') {
+        if (train.status === 'arrived') return 'ARRIVED';
+        if (train.status === 'moving') return 'PROCEEDING';
+        return 'READY TO PROCEED';
+      }
+      if (train.action === 'REROUTED') {
+        if (train.status === 'arrived') return 'ARRIVED (REROUTED)';
+        if (train.status === 'moving') return 'PROCEEDING (REROUTED)';
+        return 'READY TO PROCEED (REROUTED)';
+      }
+      return train.status?.toUpperCase() || 'UNKNOWN';
+    };
+
+    const OptimizationBlock = () => {
+      const opt = train.optimization;
+      return (
+        <div className="mt-4">
+          <div className="text-sm text-gray-400 mb-1">Optimization</div>
+          {!opt && <div className="text-gray-300 text-sm">PROCEED: Delay 0min</div>}
+          {opt && (
+            <>
+              <div className={`text-sm mb-2 ${
+                opt.action === 'PROCEED' ? 'text-green-400' :
+                opt.action === 'HOLD' ? 'text-red-400' :
+                opt.action === 'REROUTED' ? 'text-yellow-400' :
+                'text-gray-400'
+              }`}>
+                {opt.action}: Delay {opt.total_delay_minutes}min
+              </div>
+              <div className="bg-gray-900 border border-gray-700 rounded p-2 max-h-40 overflow-auto text-xs">
+                <div className="text-white space-y-1">
+                  <div>Action: <span className={
+                    opt.action === 'PROCEED' ? 'text-green-400' :
+                    opt.action === 'HOLD' ? 'text-red-400' :
+                    opt.action === 'REROUTED' ? 'text-yellow-400' :
+                    'text-gray-400'
+                  }>{opt.action}</span></div>
+                  <div>Total Delay: {opt.total_delay_minutes} minutes</div>
+                  <div>Path: {opt.path?.join(' → ')}</div>
+                  {train.originalPath && opt.action === 'REROUTED' && (
+                    <div className="border-t border-gray-600 pt-1 mt-1">
+                      <div className="text-gray-400">Original Path: {train.originalPath.join(' → ')}</div>
+                      <div className="text-yellow-400">Rerouted Path: {opt.path?.join(' → ')}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      );
     };
 
     return (
@@ -558,14 +726,22 @@ const TrainSimulationSystem = () => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold">Train {train.id}</h2>
-              <span className={`px-2 py-1 rounded text-xs font-semibold ${train.status === 'moving' ? 'bg-green-500' :
-                train.status === 'stopped' ? 'bg-red-500' :
-                  train.status === 'waiting' ? 'bg-gray-500' : 'bg-blue-500'
+              <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                train.action === 'PROCEED' ? 'bg-green-500' :
+                train.action === 'HOLD' ? 'bg-red-500' :
+                train.action === 'REROUTED' ? 'bg-yellow-500 text-black' :
+                'bg-gray-500'
                 }`}>
                 {getStatusText(train)}
               </span>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }} 
+              className="text-gray-400 hover:text-white"
+            >
               <X size={24} />
             </button>
           </div>
@@ -598,51 +774,31 @@ const TrainSimulationSystem = () => {
               <Clock size={16} className="text-blue-400" />
               <div>
                 <div className="text-sm text-gray-400">Departure</div>
-                <div className="text-lg font-semibold">{formatSimTime(train.departureTime)}</div>
+                <div className="text-lg font-semibold">{formatSimTime(train.adjustedDepartureTime || train.departureTime)}</div>
               </div>
             </div>
           </div>
+
           <div className="border-t border-gray-700 pt-4 mb-3">
             <div className="text-sm text-gray-400">Progress</div>
             <div className="flex justify-between items-center">
               <div className="text-lg font-semibold">{train.currentSectionIndex + 1} / {train.path.length}</div>
-              <div className="text-lg font-semibold">Path: {train.path.join(' → ')}</div>
+              <div className="text-sm">Path: {train.path.join(' → ')}</div>
             </div>
           </div>
-          {train.status === 'stopped' && (
-            <button
-              onClick={() => onOverride && onOverride(train)}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-            >
-              Override (Collision Risk)
-            </button>
-          )}
-          <div className='w-full flex justify-center'>
-            <button
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent parent card click (modal open)
-                // Find the alert & handle override if exists:
-                const alert = alerts.find(a => a.trainId === train.id);
-                if (alert) {
-                  handleOverride(train.id, alert.targetSection);
-                }
-              }}
-              className="w mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors"
-            >
-              Override
-            </button>
-          </div>
+
+          <OptimizationBlock />
         </div>
       </div>
     );
   };
 
+  // ====== RENDER ======
   return (
     <div className="min-h-screen bg-gray-900 font-sans">
-      {/* Sidebar */}
+      <Toaster position="top-right" />
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
-      {/* Global Header */}
       <GlobalHeader
         isLive={true}
         setIsLive={() => { }}
@@ -651,18 +807,15 @@ const TrainSimulationSystem = () => {
         setSidebarOpen={setSidebarOpen}
       />
 
-      {/* Left Panel */}
       <LeftPanel
         isOpen={leftPanelOpen}
         setIsOpen={setLeftPanelOpen}
         sidebarOpen={sidebarOpen}
       />
 
-      {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'} pt-16`}>
         <div className="p-4">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="bg-gray-800 rounded-lg p-4 mb-4">
               <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold text-white">Railway Train Simulation System</h1>
@@ -673,7 +826,12 @@ const TrainSimulationSystem = () => {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setIsRunning(!isRunning)}
+                      onClick={() => {
+                        if (!isRunning && pendingTrains.length > 0) {
+                          optimizeAndStartSimulation();
+                        }
+                        setIsRunning(!isRunning);
+                      }}
                       className={`px-4 py-2 rounded-lg font-medium flex items-center gap-1 ${isRunning
                         ? 'bg-red-600 hover:bg-red-700 text-white'
                         : 'bg-green-600 hover:bg-green-700 text-white'
@@ -698,7 +856,6 @@ const TrainSimulationSystem = () => {
                 </div>
               </div>
 
-              {/* Train Input Form */}
               {showForm && (
                 <div className="bg-gray-700 rounded-lg p-4 mb-4">
                   <h3 className="text-white font-bold mb-3">Add New Train</h3>
@@ -713,6 +870,21 @@ const TrainSimulationSystem = () => {
                         placeholder="e.g., T001"
                       />
                     </div>
+
+                    <div>
+                      <label className="block text-gray-300 text-sm mb-1">Train Type</label>
+                      <select
+                        value={trainForm.trainType}
+                        onChange={(e) => setTrainForm(prev => ({ ...prev, trainType: e.target.value }))}
+                        className="w-full bg-gray-600 text-white p-2 rounded border border-gray-500"
+                      >
+                        <option value="">Select type</option>
+                        <option value="Passenger">Passenger</option>
+                        <option value="Local">Local</option>
+                        <option value="Freight">Freight</option>
+                      </select>
+                    </div>
+
                     <div>
                       <label className="block text-gray-300 text-sm mb-1">Start Section</label>
                       <select
@@ -726,6 +898,7 @@ const TrainSimulationSystem = () => {
                         ))}
                       </select>
                     </div>
+
                     <div>
                       <label className="block text-gray-300 text-sm mb-1">Scheduled Time (HH:MM)</label>
                       <input
@@ -735,6 +908,7 @@ const TrainSimulationSystem = () => {
                         className="w-full bg-gray-600 text-white p-2 rounded border border-gray-500"
                       />
                     </div>
+
                     <div>
                       <label className="block text-gray-300 text-sm mb-1">Departure Time (HH:MM)</label>
                       <input
@@ -745,6 +919,7 @@ const TrainSimulationSystem = () => {
                       />
                     </div>
                   </div>
+
                   <div className="mb-4">
                     <label className="block text-gray-300 text-sm mb-1">Path (space-separated sections)</label>
                     <input
@@ -752,9 +927,56 @@ const TrainSimulationSystem = () => {
                       value={trainForm.path}
                       onChange={(e) => setTrainForm(prev => ({ ...prev, path: e.target.value }))}
                       className="w-full bg-gray-600 text-white p-2 rounded border border-gray-500"
-                      placeholder="e.g., A1 J1 P1A P1 P1D J4 E1"
+                      placeholder="e.g., Entry_1 A P1_entry P1_exit F Entry_12"
                     />
                   </div>
+
+                  {/* Delay Factors */}
+                  <div className="mb-4">
+                    <h4 className="text-white font-medium mb-2">Delay Factors (Optional)</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-gray-300 text-xs mb-1">Chain Pull Delay (min)</label>
+                        <input
+                          type="number"
+                          value={trainForm.delayFactors.chainPullDelay}
+                          onChange={(e) => setTrainForm(prev => ({
+                            ...prev,
+                            delayFactors: { ...prev.delayFactors, chainPullDelay: e.target.value }
+                          }))}
+                          className="w-full bg-gray-600 text-white p-2 rounded border border-gray-500 text-sm"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-gray-300 text-xs mb-1">Loco Pilot Delay (min)</label>
+                        <input
+                          type="number"
+                          value={trainForm.delayFactors.locoPilotDelay}
+                          onChange={(e) => setTrainForm(prev => ({
+                            ...prev,
+                            delayFactors: { ...prev.delayFactors, locoPilotDelay: e.target.value }
+                          }))}
+                          className="w-full bg-gray-600 text-white p-2 rounded border border-gray-500 text-sm"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-gray-300 text-xs mb-1">Weather Delay (min)</label>
+                        <input
+                          type="number"
+                          value={trainForm.delayFactors.mlWeatherDelay}
+                          onChange={(e) => setTrainForm(prev => ({
+                            ...prev,
+                            delayFactors: { ...prev.delayFactors, mlWeatherDelay: e.target.value }
+                          }))}
+                          className="w-full bg-gray-600 text-white p-2 rounded border border-gray-500 text-sm"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex gap-2">
                     <button
                       onClick={addTrain}
@@ -772,7 +994,7 @@ const TrainSimulationSystem = () => {
                 </div>
               )}
 
-              {/* Combined Track Network and Platform Schematic - WITH LARGER CIRCLES */}
+              {/* PLATFORM SCHEMATIC */}
               <div className="bg-gray-900 rounded-lg p-4">
                 <h2 className="text-white font-bold mb-2">Platform Schematic</h2>
                 <p className="text-gray-400 mb-4 text-sm">Click on trains for detailed information</p>
@@ -786,7 +1008,7 @@ const TrainSimulationSystem = () => {
                     </defs>
                     <rect width="100%" height="100%" fill="url(#grid)" />
 
-                    {/* Track lines - following 2nd image layout */}
+                    {/* Track Lines */}
                     <path d="M 0 120 L 1400 120" stroke="#6B7280" strokeWidth="4" />
                     <path d="M 0 140 L 1400 140" stroke="#6B7280" strokeWidth="4" />
                     <path d="M 0 220 L 1400 220" stroke="#6B7280" strokeWidth="4" />
@@ -794,19 +1016,15 @@ const TrainSimulationSystem = () => {
                     <path d="M 0 320 L 1400 320" stroke="#6B7280" strokeWidth="4" />
                     <path d="M 0 340 L 1400 340" stroke="#6B7280" strokeWidth="4" />
 
-                    {/* Junction lines - following 2nd image layout */}
+                    {/* Junction Lines */}
                     <path d="M 150 120 L 350 140" stroke="#6B7280" strokeWidth="2" />
                     <path d="M 150 220 L 350 240" stroke="#6B7280" strokeWidth="2" />
                     <path d="M 150 320 L 350 340" stroke="#6B7280" strokeWidth="2" />
                     <path d="M 1050 120 L 1250 140" stroke="#6B7280" strokeWidth="2" />
                     <path d="M 1050 220 L 1250 240" stroke="#6B7280" strokeWidth="2" />
                     <path d="M 1050 320 L 1250 340" stroke="#6B7280" strokeWidth="2" />
-                    <path d="M 100 80 L 350 240" stroke="#6B7280" strokeWidth="2" />
-                    <path d="M 100 180 L 350 340" stroke="#6B7280" strokeWidth="2" />
-                    <path d="M 1050 340 L 1300 180" stroke="#6B7280" strokeWidth="2" />
-                    <path d="M 1050 240 L 1300 80" stroke="#6B7280" strokeWidth="2" />
 
-                    {/* Central Station - following 2nd image design */}
+                    {/* Platform Area */}
                     <rect x="450" y="35" width="500" height="350" fill="#374151" stroke="#6B7280" strokeWidth="3" rx="12" fillOpacity="0.8" />
                     <rect x="400" y="100" width="600" height="25" fill="#4B5563" rx="4" />
                     <text x="700" y="118" textAnchor="middle" className="fill-white text-base font-semibold">Platform 1</text>
@@ -815,231 +1033,196 @@ const TrainSimulationSystem = () => {
                     <rect x="400" y="300" width="600" height="25" fill="#4B5563" rx="4" />
                     <text x="700" y="318" textAnchor="middle" className="fill-white text-base font-semibold">Platform 3</text>
 
-                    {/* Junction points with ENLARGED CIRCLES and proper labels */}
-                    {/* Left side approach and junction nodes - INCREASED SIZE */}
-                    <circle cx="100" cy="130" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="100" y="136" textAnchor="middle" className="fill-white text-sm font-bold">A1</text>
-                    <circle cx="100" cy="230" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="100" y="236" textAnchor="middle" className="fill-white text-sm font-bold">A2</text>
-                    <circle cx="100" cy="330" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="100" y="336" textAnchor="middle" className="fill-white text-sm font-bold">A3</text>
+                    {/* Track Sections */}
+                    {Object.entries(TRACK_SECTIONS).map(([id, section]) => (
+                      <g key={id}>
+                        <circle 
+                          cx={section.x} 
+                          cy={section.y} 
+                          r={section.isStation ? 30 : 15} 
+                          fill={section.isStation ? "#3B82F6" : "#4B5563"} 
+                          stroke="#E5E7EB" 
+                          strokeWidth="2" 
+                        />
+                        <text 
+                          x={section.x} 
+                          y={section.y + 6} 
+                          textAnchor="middle" 
+                          className={`fill-white ${section.isStation ? 'text-base' : 'text-sm'} font-bold`}
+                        >
+                          {id}
+                        </text>
+                      </g>
+                    ))}
 
-                    <circle cx="200" cy="130" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="200" y="136" textAnchor="middle" className="fill-white text-sm font-bold">J1</text>
-                    <circle cx="200" cy="230" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="200" y="236" textAnchor="middle" className="fill-white text-sm font-bold">J2</text>
-                    <circle cx="200" cy="330" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="200" y="336" textAnchor="middle" className="fill-white text-sm font-bold">J3</text>
+                    {/* Status Indicators */}
+                    <g className="text-xs">
+                      <circle cx="1300" cy="120" r="8" fill="#22c55e" />
+                      <text x="1320" y="125" className="fill-white">PROCEED</text>
+                      <circle cx="1300" cy="140" r="8" fill="#ef4444" />
+                      <text x="1320" y="145" className="fill-white">HOLD</text>
+                      <circle cx="1300" cy="160" r="8" fill="#eab308" />
+                      <text x="1320" y="165" className="fill-white">REROUTED</text>
+                      <circle cx="1300" cy="180" r="8" fill="#6b7280" />
+                      <text x="1320" y="185" className="fill-white">Waiting</text>
+                    </g>
 
-                    <circle cx="350" cy="130" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="350" y="136" textAnchor="middle" className="fill-white text-sm font-bold">P1A</text>
-                    <circle cx="350" cy="230" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="350" y="236" textAnchor="middle" className="fill-white text-sm font-bold">P2A</text>
-                    <circle cx="350" cy="330" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="350" y="336" textAnchor="middle" className="fill-white text-sm font-bold">P3A</text>
-
-                    {/* Platform nodes - INCREASED SIZE from 25 to 30 */}
-                    <circle cx="500" cy="130" r="30" fill="#3B82F6" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="500" y="138" textAnchor="middle" className="fill-white text-base font-bold">P1</text>
-                    <circle cx="500" cy="230" r="30" fill="#3B82F6" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="500" y="238" textAnchor="middle" className="fill-white text-base font-bold">P2</text>
-                    <circle cx="500" cy="330" r="30" fill="#3B82F6" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="500" y="338" textAnchor="middle" className="fill-white text-base font-bold">P3</text>
-
-                    {/* Right side departure and junction nodes - INCREASED SIZE */}
-                    <circle cx="650" cy="130" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="650" y="136" textAnchor="middle" className="fill-white text-sm font-bold">P1D</text>
-                    <circle cx="650" cy="230" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="650" y="236" textAnchor="middle" className="fill-white text-sm font-bold">P2D</text>
-                    <circle cx="650" cy="330" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="650" y="336" textAnchor="middle" className="fill-white text-sm font-bold">P3D</text>
-
-                    <circle cx="750" cy="130" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="750" y="136" textAnchor="middle" className="fill-white text-sm font-bold">J4</text>
-                    <circle cx="750" cy="230" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="750" y="236" textAnchor="middle" className="fill-white text-sm font-bold">J5</text>
-                    <circle cx="750" cy="330" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="750" y="336" textAnchor="middle" className="fill-white text-sm font-bold">J6</text>
-
-                    <circle cx="850" cy="130" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="850" y="136" textAnchor="middle" className="fill-white text-sm font-bold">E1</text>
-                    <circle cx="850" cy="230" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="850" y="236" textAnchor="middle" className="fill-white text-sm font-bold">E2</text>
-                    <circle cx="850" cy="330" r="15" fill="#4B5563" stroke="#E5E7EB" strokeWidth="2" />
-                    <text x="850" y="336" textAnchor="middle" className="fill-white text-sm font-bold">E3</text>
-
-                    {/* Direction indicators following 2nd image */}
-                    <polygon points="1330,115 1370,120 1330,125" fill="#10B981" />
-                    <polygon points="1330,135 1370,140 1330,145" fill="#10B981" />
-                    <polygon points="1330,215 1370,220 1330,225" fill="#10B981" />
-                    <polygon points="1330,235 1370,240 1330,245" fill="#10B981" />
-                    <polygon points="1330,315 1370,320 1330,325" fill="#10B981" />
-                    <polygon points="1330,335 1370,340 1330,345" fill="#10B981" />
-
-                    {/* Track labels following 2nd image */}
-                    <text x="20" y="115" className="fill-gray-400 text-sm">Track 1A</text>
-                    <text x="20" y="155" className="fill-gray-400 text-sm">Track 1B</text>
-                    <text x="20" y="215" className="fill-gray-400 text-sm">Track 2A</text>
-                    <text x="20" y="255" className="fill-gray-400 text-sm">Track 2B</text>
-                    <text x="20" y="315" className="fill-gray-400 text-sm">Track 3A</text>
-                    <text x="20" y="355" className="fill-gray-400 text-sm">Track 3B</text>
-
-                    {/* NEW: Additional track labels on the right side */}
-                    <text x="1350" y="115" className="fill-gray-400 text-sm">Track 1A</text>
-                    <text x="1350" y="155" className="fill-gray-400 text-sm">Track 1B</text>
-                    <text x="1350" y="215" className="fill-gray-400 text-sm">Track 2A</text>
-                    <text x="1350" y="255" className="fill-gray-400 text-sm">Track 2B</text>
-                    <text x="1350" y="315" className="fill-gray-400 text-sm">Track 3A</text>
-                    <text x="1350" y="355" className="fill-gray-400 text-sm">Track 3B</text>
-
-                    {/* NEW: Exit node labels on the right side */}
-                    <text x="900" y="136" textAnchor="start" className="fill-gray-300 text-sm font-bold">→ E1 Exit</text>
-                    <text x="900" y="236" textAnchor="start" className="fill-gray-300 text-sm font-bold">→ E2 Exit</text>
-                    <text x="900" y="336" textAnchor="start" className="fill-gray-300 text-sm font-bold">→ E3 Exit</text>
-                  </svg>
-
-                  {/* Train positions */}
-                  <div className="absolute inset-0">
-                    {trains.map(train => {
-                      const section = TRACK_SECTIONS[train.currentSection];
-                      if (!section) return null;
+                    {/* Render Active Trains Only (with 5-minute visibility rule) */}
+                    {activeTrains.filter(train => train.isVisible).map(train => {
+                      const sectionInfo = TRACK_SECTIONS[train.currentSection];
+                      if (!sectionInfo) return null;
 
                       return (
-                        <div key={train.id}
-                          className="absolute cursor-pointer"
-                          style={{
-                            left: `${(section.x / 1400) * 100}%`,
-                            top: `${((section.y - 45) / 550) * 100}%`,
-                            transform: 'translate(-50%, 0)'
-                          }}
-                          onClick={() => setSelectedTrain(train)}>
-                          <TrainSvg
-                            color={getTrainColor(train)}
-                            direction="right"
-                            trainId={train.id}
-                          />
-                        </div>
+                        <g key={train.id} onClick={() => setSelectedTrain(train)} className="cursor-pointer">
+                          <foreignObject
+                            x={sectionInfo.x - 24}
+                            y={sectionInfo.y - 10}
+                            width="48"
+                            height="20"
+                          >
+                            <TrainSvg
+                              color={getTrainColor(train)}
+                              direction="right"
+                              trainId={train.id}
+                            />
+                          </foreignObject>
+                        </g>
                       );
                     })}
-                  </div>
-                </div>
-
-                <div className="flex justify-center mt-4 gap-6 text-sm text-gray-300">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#22c55e' }}></div>
-                    <span>Running</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#eab308' }}></div>
-                    <span>Delayed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#ef4444' }}></div>
-                    <span>Stopped</span>
-                  </div>
+                  </svg>
                 </div>
               </div>
             </div>
 
-            {/* Alerts Panel */}
-            {alerts.length > 0 && (
-              <div className="bg-red-900 border border-red-600 rounded-lg p-4 mb-4">
-                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" />
-                  Collision Alerts
-                </h3>
-                {alerts.map(alert => (
-                  <div key={alert.id} className="bg-red-800 rounded p-3 mb-2 flex justify-between items-center">
-                    <div className="text-white">
-                      <div className="font-medium">Train {alert.trainId}</div>
-                      <div className="text-sm opacity-90">{alert.message}</div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleOverride(alert.trainId, alert.targetSection)}
-                        className="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded text-sm"
-                      >
-                        Override (Collision Risk)
-                      </button>
-                      <button
-                        onClick={() => clearAlert(alert.id)}
-                        className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
+            {/* OPTIMIZATION RESULTS */}
+            {optimizationResults && (
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <h2 className="text-white font-bold mb-4">Optimization Results</h2>
+                <div className="bg-gray-700 rounded-lg p-4 mb-4">
+                  <div className="text-white text-lg font-semibold mb-2">
+                    Total Score: {optimizationResults.score}
                   </div>
-                ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {optimizationResults.recommendations?.map((rec, index) => (
+                      <div key={index} className="bg-gray-600 rounded-lg p-3">
+                        <h3 className="text-white font-bold mb-2">Train {rec.train_id}</h3>
+                        <div className="text-gray-300 text-sm space-y-1">
+                          <div>Action: <span className={
+                            rec.action === 'PROCEED' ? 'text-green-400' :
+                            rec.action === 'HOLD' ? 'text-red-400' :
+                            rec.action === 'REROUTED' ? 'text-yellow-400' :
+                            'text-gray-400'
+                          }>{rec.action}</span></div>
+                          <div>Delay: <span className="text-yellow-400">{rec.total_delay_minutes} min</span></div>
+                          <div className="text-xs">Path: {rec.path?.join(' → ')}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Train Status Panel */}
-            <div className="bg-gray-800 rounded-lg p-4">
-              <h3 className="text-white font-bold mb-3">Train Status</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {trains.map(train => (
-                  <div key={train.id} className="bg-gray-700 rounded-lg p-3 cursor-pointer hover:bg-gray-600 transition-colors"
-                    onClick={() => setSelectedTrain(train)}>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-white font-bold">{train.id}</span>
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: getTrainColor(train) }}
-                      ></div>
+            {/* PENDING TRAINS SECTION */}
+            {pendingTrains.length > 0 && (
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <h2 className="text-white font-bold mb-4">Pending Trains (Waiting for Simulation Start)</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pendingTrains.map(train => (
+                    <div key={train.id} className="bg-gray-700 rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-white font-bold">{train.id}</h3>
+                        <span className="px-2 py-1 rounded text-xs font-semibold bg-yellow-500 text-black">
+                          PENDING
+                        </span>
+                      </div>
+                      <div className="text-gray-300 text-sm space-y-1">
+                        <div>Type: {train.type}</div>
+                        <div>Path: {train.path.join(' → ')}</div>
+                        <div>Schedule: {formatSimTime(train.scheduledTime)}</div>
+                        <div>Departure: {formatSimTime(train.departureTime)}</div>
+                      </div>
                     </div>
-                    <div className="text-gray-300 text-sm space-y-1">
-                      <div>Status: <span className="font-medium text-white">{train.status.toUpperCase()}</span></div>
-                      <div>Section: <span className="font-medium text-white">{train.currentSection}</span></div>
-                      <div>Progress: <span className="font-medium text-white">{train.currentSectionIndex + 1}/{train.path.length}</span></div>
-                      <div>Schedule: <span className="font-medium text-white">{formatSimTime(train.scheduledTime)}</span></div>
-                      <div>Departure: <span className="font-medium text-white">{formatSimTime(train.departureTime)}</span></div>
-                      <div>Section Time: <span className="font-medium text-white">{Math.floor((train.timeInCurrentSection || 0) / 60)}/12 min</span></div>
-                      {train.isInStation && (
-                        <div className="text-yellow-400">In Station - Dwelling ({Math.max(0, Math.floor((train.stationDwellTime - (simulationTime - train.stationArrivalTime)) / 60))} min left)</div>
-                      )}
-                    </div>
-                    <div className='w-full flex justify-center'>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent parent card click (modal open)
-                          // Find the alert & handle override if exists:
-                          const alert = alerts.find(a => a.trainId === train.id);
-                          if (alert) {
-                            handleOverride(train.id, alert.targetSection);
-                          }
-                        }}
-                        className="w mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors"
-                      >
-                        Override
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {trains.length === 0 && (
-                <div className="text-gray-400 text-center py-8">
-                  No trains scheduled. Click "Add Train" to begin simulation.
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* ACTIVE TRAIN STATUS SECTION */}
+            {activeTrains.length > 0 && (
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <h2 className="text-white font-bold mb-4">Active Train Status</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {activeTrains.map(train => (
+                    <div
+                      key={train.id}
+                      onClick={() => setSelectedTrain(train)}
+                      className="bg-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-600 transition-colors"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-white font-bold">{train.id}</h3>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          train.action === 'PROCEED' ? 'bg-green-500' :
+                          train.action === 'HOLD' ? 'bg-red-500' :
+                          train.action === 'REROUTED' ? 'bg-yellow-500 text-black' :
+                          'bg-gray-500'
+                          }`}>
+                          {train.action === 'HOLD' ? 'WAITING' : 
+                           train.action === 'PROCEED' && train.status === 'moving' ? 'PROCEEDING' :
+                           train.action === 'PROCEED' && train.status === 'arrived' ? 'ARRIVED' :
+                           train.action === 'PROCEED' ? 'READY' :
+                           train.action === 'REROUTED' && train.status === 'moving' ? 'REROUTED' :
+                           train.action === 'REROUTED' && train.status === 'arrived' ? 'ARRIVED (R)' :
+                           train.action === 'REROUTED' ? 'READY (R)' :
+                           train.status?.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="text-gray-300 text-sm space-y-1">
+                        <div>Type: {train.type}</div>
+                        <div>Section: <span className="font-mono">{train.currentSection}</span></div>
+                        <div>Progress: {train.currentSectionIndex + 1}/{train.path.length}</div>
+                        <div>Schedule: {formatSimTime(train.scheduledTime)}</div>
+                        <div>Departure: {formatSimTime(train.adjustedDepartureTime || train.departureTime)}</div>
+                        <div>Visible: <span className={train.isVisible ? 'text-green-400' : 'text-red-400'}>
+                          {train.isVisible ? 'Yes' : `At ${formatSimTime((train.showTime || train.scheduledTime - 5))}`}
+                        </span></div>
+                        
+                        {/* Optimization Status */}
+                        <div className="border-t border-gray-600 pt-2 mt-2">
+                          <div className="text-xs text-gray-400">Optimization:</div>
+                          {train.optimization && (
+                            <div className={`text-xs ${
+                              train.optimization.action === 'PROCEED' ? 'text-green-400' :
+                              train.optimization.action === 'HOLD' ? 'text-red-400' :
+                              train.optimization.action === 'REROUTED' ? 'text-yellow-400' :
+                              'text-gray-400'
+                            }`}>
+                              {train.optimization.action} - Delay: {train.optimization.total_delay_minutes}min
+                              {train.optimization.action === 'REROUTED' && (
+                                <div className="text-xs text-gray-400 mt-1">
+                                  Rerouted to: {train.optimization.path?.join(' → ')}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Train Modal */}
-      <TrainModal
-        train={selectedTrain}
-        onClose={() => setSelectedTrain(null)}
-        onOverride={(train) => {
-          // Find the alert for this train and handle override
-          const alert = alerts.find(a => a.trainId === train.id);
-          if (alert) {
-            handleOverride(train.id, alert.targetSection);
-          }
-          setSelectedTrain(null);
-        }}
-      />
+      {/* TRAIN MODAL */}
+      {selectedTrain && (
+        <TrainModal
+          train={selectedTrain}
+          onClose={() => setSelectedTrain(null)}
+        />
+      )}
     </div>
   );
 };
