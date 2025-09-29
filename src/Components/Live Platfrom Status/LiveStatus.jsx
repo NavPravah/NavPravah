@@ -42,39 +42,39 @@ const TrainSvg = ({ color, direction, trainId }) => {
   );
 };
 
-// ====== TRACK SECTIONS WITH UPDATED POSITIONS ======
+// ====== TRACK SECTIONS WITH UPDATED NODE NAMES ======
 const TRACK_SECTIONS = {
-  // Entry lines (numbered 1-6) - POSITIONED ON TRACKS
-  '1': { x: 50, y: 125, connections: ['A'] },
-  '2': { x: 50, y: 195, connections: ['B'] },
-  '3': { x: 50, y: 265, connections: ['C'] },
+  // Entry lines - RENAMED WITH Entry_ PREFIX
+  'Entry_1': { x: 50, y: 125, connections: ['Entry_A'] },
+  'Entry_2': { x: 50, y: 195, connections: ['Entry_B'] },
+  'Entry_3': { x: 50, y: 265, connections: ['Entry_C'] },
   
-  // Junction points - A connects to B, E connects to F
-  A: { x: 200, y: 125, connections: ['P1', 'B'] },
-  B: { x: 200, y: 195, connections: ['P2'] },
-  C: { x: 200, y: 265, connections: ['P3'] },
+  // Junction points - RENAMED WITH Entry_ PREFIX
+  'A': { x: 200, y: 125, connections: ['P1_entry', 'B'] },
+  'B': { x: 200, y: 195, connections: ['P2_entry'] },
+  'C': { x: 200, y: 265, connections: ['P3_entry'] },
+
+  // Platform entry points - RENAMED WITH Entry_ PREFIX
+  'P1_entry': { x: 400, y: 125, connections: ['P1_exit'], isStation: true, platform: 1 },
+  'P2_entry': { x: 400, y: 195, connections: ['P2_exit'], isStation: true, platform: 2 },
+  'P3_entry': { x: 400, y: 265, connections: ['P3_exit'], isStation: true, platform: 3 },
+
+  // Platform exit points - RENAMED WITH Entry_ PREFIX
+  'P1_exit': { x: 600, y: 125, connections: ['F'] },
+  'P2_exit': { x: 600, y: 195, connections: ['E'] },
+  'P3_exit': { x: 600, y: 265, connections: ['D'] },
   
-  // Platform entry points
-  P1: { x: 400, y: 125, connections: ['E1'], isStation: true, platform: 1 },
-  P2: { x: 400, y: 195, connections: ['E2'], isStation: true, platform: 2 },
-  P3: { x: 400, y: 265, connections: ['E3'], isStation: true, platform: 3 },
+  // Exit junction points - RENAMED WITH Entry_ PREFIX
+  'F': { x: 750, y: 125, connections: ['F', 'Entry_10'] },
+  'E': { x: 750, y: 195, connections: ['Entry_9'] },
+  'D': { x: 750, y: 265, connections: ['Entry_8', 'Entry_7'] },
   
-  // Platform exit points - E and F interchanged
-  E1: { x: 600, y: 125, connections: ['E'] },
-  E2: { x: 600, y: 195, connections: ['F'] },
-  E3: { x: 600, y: 265, connections: ['D'] },
-  
-  // Exit junction points - E connects to F
-  E: { x: 750, y: 125, connections: ['F', 'EX1'] },
-  F: { x: 750, y: 195, connections: ['EX2'] },
-  D: { x: 750, y: 265, connections: ['EX3', 'EX4'] },
-  
-  // Exit nodes - MOVED MORE TO THE RIGHT
-  EX1: { x: 1150, y: 125, connections: [], isExit: true },
-  EX2: { x: 1150, y: 195, connections: [], isExit: true },
-  EX3: { x: 1150, y: 265, connections: [], isExit: true },
-  EX4: { x: 1150, y: 335, connections: [], isExit: true },
-  EX5: { x: 1150, y: 75, connections: [], isExit: true },
+  // Exit nodes - RENAMED WITH Entry_ PREFIX
+  'Entry_10': { x: 1150, y: 125, connections: [], isExit: true },
+  'Entry_9': { x: 1150, y: 195, connections: [], isExit: true },
+  'Entry_8': { x: 1150, y: 265, connections: [], isExit: true },
+  'Entry_7': { x: 1150, y: 335, connections: [], isExit: true },
+  'Entry_12': { x: 1150, y: 75, connections: [], isExit: true },
 };
 
 // ====== GlobalHeader ======
@@ -359,15 +359,15 @@ const TrainSimulationSystem = () => {
     return hours * 60 + minutes;
   };
 
-  // ====== GET EXIT NODE FOR TRAIN ======
+  // ====== GET EXIT NODE FOR TRAIN - UPDATED WITH NEW NAMES ======
   const getExitNodeForTrain = (train) => {
     const path = train.path;
-    if (path.includes('E1') || path.includes('P1')) return 'EX1';
-    if (path.includes('E2') || path.includes('P2')) return 'EX2';
-    if (path.includes('E3') || path.includes('P3')) return 'EX3';
-    if (path.includes('E')) return 'EX5';
+    if (path.includes('P1_exit') || path.includes('P1_entry')) return 'Entry_10';
+    if (path.includes('P2_exit') || path.includes('P2_entry')) return 'Entry_9';
+    if (path.includes('P3_exit') || path.includes('P3_entry')) return 'Entry_8';
+    if (path.includes('Entry_E')) return 'Entry_12';
     
-    return 'EX4';
+    return 'Entry_7';
   };
 
   // ====== API FUNCTIONS ======
@@ -417,21 +417,22 @@ const TrainSimulationSystem = () => {
       setOptimizationResults(data);
       toast.success('Optimization completed successfully!');
       
-      if (data.recommendations) {
+      // ====== FIXED API RESPONSE PROCESSING ======
+      if (data && data.recommendations) {
         const newActiveTrains = pendingTrains.map(train => {
           const recommendation = data.recommendations.find(r => r.train_id === train.id);
+          
           if (recommendation) {
             const adjustedDeparture = train.departureTime + (recommendation.total_delay_minutes || 0);
             
-            const finalPath = recommendation.action === 'REROUTED' 
-              ? recommendation.path 
-              : train.path;
+            // Use the recommended path if available, otherwise use original path
+            const finalPath = recommendation.path || train.path;
 
             return {
               ...train,
               recommendedPath: recommendation.path,
               totalDelay: recommendation.total_delay_minutes,
-              action: recommendation.action,
+              action: recommendation.action, // This should be 'PROCEED' or 'HOLD' from API
               optimization: recommendation,
               path: finalPath,
               originalPath: train.path,
@@ -447,6 +448,8 @@ const TrainSimulationSystem = () => {
               exitNode: getExitNodeForTrain(train)
             };
           }
+          
+          // If no recommendation found, default to HOLD
           return {
             ...train,
             isVisible: false,
@@ -458,11 +461,35 @@ const TrainSimulationSystem = () => {
         
         setActiveTrains(newActiveTrains);
         setPendingTrains([]);
+      } else {
+        // If no recommendations in response, set all trains to HOLD
+        const newActiveTrains = pendingTrains.map(train => ({
+          ...train,
+          isVisible: false,
+          action: 'HOLD',
+          showTime: train.scheduledTime - 5,
+          exitNode: getExitNodeForTrain(train)
+        }));
+        
+        setActiveTrains(newActiveTrains);
+        setPendingTrains([]);
+        toast.warn('No recommendations received from API - all trains set to HOLD');
       }
     } catch (err) {
       console.error('API Error:', err);
-      toast.error('Failed to apply optimization. Please try again later.');
-      setOptimizationResults(null);
+      toast.error(`Failed to apply optimization: ${err.message}`);
+      
+      // On error, still move trains to active but set them to HOLD
+      const newActiveTrains = pendingTrains.map(train => ({
+        ...train,
+        isVisible: false,
+        action: 'HOLD',
+        showTime: train.scheduledTime - 5,
+        exitNode: getExitNodeForTrain(train)
+      }));
+      
+      setActiveTrains(newActiveTrains);
+      setPendingTrains([]);
     }
   };
 
@@ -862,7 +889,7 @@ const TrainSimulationSystem = () => {
                       value={trainForm.path}
                       onChange={(e) => setTrainForm(prev => ({ ...prev, path: e.target.value }))}
                       className="w-full bg-gray-600 text-white p-2 rounded border border-gray-500"
-                      placeholder="e.g., 1 A B P2 E2 F EX2"
+                      placeholder="e.g., Entry_1 Entry_A Entry_B Entry_P2 Entry_E2 Entry_F Entry_9"
                     />
                   </div>
 
@@ -928,7 +955,7 @@ const TrainSimulationSystem = () => {
                 </div>
               )}
 
-              {/* PLATFORM SCHEMATIC WITH ALL REQUESTED CHANGES */}
+              {/* PLATFORM SCHEMATIC WITH UPDATED NODE NAMES */}
               <div className="bg-gray-900 rounded-lg p-4 relative">
                 <h2 className="text-white font-bold mb-2">Platform Schematic</h2>
                 <p className="text-gray-400 mb-4 text-sm">Click on trains for detailed information</p>
@@ -1015,7 +1042,7 @@ const TrainSimulationSystem = () => {
                     <rect x="370" y="250" width="260" height="30" fill="#4B5563" rx="4" />
                     <text x="500" y="270" textAnchor="middle" className="fill-white text-base font-semibold">Platform 3</text>
 
-                    {/* Track Sections - NODES 5 AND 6 POSITIONED ON TRACKS */}
+                    {/* Track Sections - NODES WITH UPDATED NAMES */}
                     {Object.entries(TRACK_SECTIONS).map(([id, section]) => (
                       <g key={id}>
                         <circle 
@@ -1035,7 +1062,7 @@ const TrainSimulationSystem = () => {
                           y={section.y + 5} 
                           textAnchor="middle" 
                           className={`fill-white ${
-                            section.isStation ? 'text-sm' : 
+                            section.isStation ? 'text-xs' : 
                             section.isExit ? 'text-xs' : 
                             'text-xs'
                           } font-bold`}
@@ -1075,13 +1102,16 @@ const TrainSimulationSystem = () => {
               </div>
             </div>
 
-            {/* OPTIMIZATION RESULTS */}
+            {/* OPTIMIZATION RESULTS - IMPROVED DISPLAY */}
             {optimizationResults && (
               <div className="bg-gray-800 rounded-lg p-4 mb-4">
                 <h2 className="text-white font-bold mb-4">Optimization Results</h2>
                 <div className="bg-gray-700 rounded-lg p-4 mb-4">
                   <div className="text-white text-lg font-semibold mb-2">
-                    Total Score: {optimizationResults.score}
+                    Total Score: {optimizationResults.score || 'N/A'}
+                  </div>
+                  <div className="text-gray-300 text-sm mb-3">
+                    API Response Status: {optimizationResults.recommendations ? 'Success' : 'No recommendations received'}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {optimizationResults.recommendations?.map((rec, index) => (
@@ -1094,8 +1124,8 @@ const TrainSimulationSystem = () => {
                             rec.action === 'REROUTED' ? 'text-yellow-400' :
                             'text-gray-400'
                           }>{rec.action}</span></div>
-                          <div>Delay: <span className="text-yellow-400">{rec.total_delay_minutes} min</span></div>
-                          <div className="text-xs">Path: {rec.path?.join(' → ')}</div>
+                          <div>Delay: <span className="text-yellow-400">{rec.total_delay_minutes || 0} min</span></div>
+                          <div className="text-xs">Path: {rec.path?.join(' → ') || 'No path provided'}</div>
                         </div>
                       </div>
                     ))}
@@ -1178,7 +1208,7 @@ const TrainSimulationSystem = () => {
                         
                         {/* Optimization Status */}
                         <div className="border-t border-gray-600 pt-2 mt-2">
-                          <div className="text-xs text-gray-400">Optimization:</div>
+                          <div className="text-xs text-gray-400">API Response:</div>
                           {train.optimization && (
                             <div className={`text-xs ${
                               train.optimization.action === 'PROCEED' ? 'text-green-400' :
@@ -1186,13 +1216,16 @@ const TrainSimulationSystem = () => {
                               train.optimization.action === 'REROUTED' ? 'text-yellow-400' :
                               'text-gray-400'
                             }`}>
-                              {train.optimization.action} - Delay: {train.optimization.total_delay_minutes}min
+                              {train.optimization.action} - Delay: {train.optimization.total_delay_minutes || 0}min
                               {train.optimization.action === 'REROUTED' && (
                                 <div className="text-xs text-gray-400 mt-1">
-                                  Rerouted to: {train.optimization.path?.join(' → ')}
+                                  Rerouted to: {train.optimization.path?.join(' → ') || 'No path'}
                                 </div>
                               )}
                             </div>
+                          )}
+                          {!train.optimization && (
+                            <div className="text-xs text-red-400">No API response received</div>
                           )}
                         </div>
                       </div>
